@@ -1,0 +1,12 @@
+*.o
+trace.txt
+output.txt
+.gdbinit
+lab2/lab2
+*.a
+.minix-src
+.vscode
+repository-root
+lab1
+text.exe
+io_experiment
