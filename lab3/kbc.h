@@ -1,3 +1,6 @@
+#ifndef _KBC_H_
+#define _KBC_H_
+
 #include <lcom/lcf.h>
 
 uint8_t get_scancode();
@@ -68,3 +71,5 @@ int (kbc_reenable_interrupts)();
 /* ===================== */
 
 #define DELAY_US 20000  // 20 ms (used in polling, not interrupts)
+
+#endif
