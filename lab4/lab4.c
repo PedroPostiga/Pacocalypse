@@ -37,9 +37,7 @@ int (mouse_test_packet)(uint32_t cnt) {
   message msg;
 
   // enable data reporting (LCF provides this for mouse_test_packet)
-  printf("here!!\n");
   if (mouse_enable_dr() != 0) return 1;
-  printf("here2!!\n");
   
   // subscribe mouse interrupts
   uint8_t mouse_bit_no;
@@ -80,9 +78,7 @@ int (mouse_test_packet)(uint32_t cnt) {
   if (mouse_unsubscribe_int() != 0) return 1;
 
   // disable data reporting - restore mouse to default state
-  if (mouse_disable_data_reporting() != 0) return 1;
-
-  printf("disabled data reporting\n");  
+  if (mouse_disable_data_reporting() != 0) return 1;  
  
   return 0;
 }

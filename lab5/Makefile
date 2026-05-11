@@ -1,28 +1,20 @@
 # name of the program (Minix service)
-PROG=lab4 
+PROG=lab5
 
 # source code files to be compiled
-SRCS = lab4.c mouse.c
+SRCS = lab5.c videocard.c
 
 # additional compilation flags
 # "-Wall -Wextra -Werror -I . -std=c11 -Wno-unused-parameter" are already set
 CFLAGS += -pedantic
-CFLAGS += -DLAB4
+CFLAGS += -DLAB5
 CFLAGS += -I/home/lcom/labs/lab2
+CFLAGS += -I/home/lcom/labs/lab3
 
 
 # list of library dependencies (for Lab 2, only LCF library)
-DPADD += ${LIBLCF} ${LIB_NAME}
-LDADD += -llcf -L/home/lcom/labs/lab2 -ltimer -L. -lmouse
-
-LIB_NAME = libmouse.a
-LIB_SRCS = mouse.c
-LIB_OBJS = ${LIB_SRCS:.c=.o}
-CLEANFILES += ${LIB_NAME} ${LIB_OBJS}
-
-all: lib
-lib: ${LIB_OBJS}
-	ar rcs ${LIB_NAME} ${LIB_OBJS}
+DPADD += ${LIBLCF} 
+LDADD += -llcf -L/home/lcom/labs/lab3 -lkbd -L/home/lcom/labs/lab2 -ltimer
 
 
 # include LCOM's makefile that does all the "heavy lifting"

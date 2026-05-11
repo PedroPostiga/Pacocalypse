@@ -27,7 +27,7 @@ int (kbd_subscribe_int)(uint8_t *bit_no) {
     return 0;
 }
 
-int (kbc_read_scancode)(uint8_t *byte) {
+int (kbc_read_scancode)() {
     uint8_t status;
     
     if (util_sys_inb(KBC_STAT_REG, &status) != 0)
