@@ -150,8 +150,6 @@ int(kbd_test_timed_scan)(uint8_t n) {
   int ipc_status, r;
   message msg;
 
-  extern int counter;
-
   // subscribe keyboard interrupts
   uint8_t kbd_bit_no;
   if (kbd_subscribe_int(&kbd_bit_no)) return 1;
@@ -183,7 +181,7 @@ int(kbd_test_timed_scan)(uint8_t n) {
           if (msg.m_notify.interrupts & timer_irq_set) {
             timer_int_handler();
 
-            if ((counter - last_scancode_count) >= n * 60)
+            if ((get_counter() - last_scancode_count) >= n * 60)
               done = true;
           }
 
@@ -196,7 +194,7 @@ int(kbd_test_timed_scan)(uint8_t n) {
               uint8_t scancode = get_scancode();
 
               // reset idle timer
-              last_scancode_count = counter;
+              last_scancode_count = get_counter();
 
               if (scancode == TWO_BYTE_CODE) {
                 two_byte = true;
