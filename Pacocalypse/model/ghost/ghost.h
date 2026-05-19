@@ -1,0 +1,146 @@
+#ifndef _GHOST_H_
+#define _GHOST_H_
+
+#include <stdint.h>
+#include <stdbool.h>
+#include "map.h"
+#include "player.h"
+
+/* ===================== */
+/*   GHOST CONSTANTS     */
+/* ===================== */
+
+#define GHOST_SPEED             3    // Pixels per tick (faster than player's 2)
+#define GHOST_COUNT             4    // Number of ghosts in the game
+#define GHOST_ANIM_FRAMES       2    // Normal: 2 frames; frightened handled separately
+#define GHOST_ANIM_SPEED        8    // Ticks per animation frame
+#define GHOST_FRIGHTENED_TICKS  180  // Duration of frightened state (3s at 60 Hz)
+#define GHOST_DEAD_TICKS        120  // Ticks to respawn after being eaten (2s at 60 Hz)
+
+/* ===================== */
+/*   GHOST STATE         */
+/* ===================== */
+
+typedef enum {
+    GHOST_CHASE,        // Normal roaming movement
+    GHOST_FRIGHTENED,   // Player has power-up active — ghost flees and can be eaten
+    GHOST_DEAD          // Eaten — waiting to respawn at ghost spawn tile
+} ghost_state_t;
+
+/* ===================== */
+/*   GHOST IDENTITY      */
+/* ===================== */
+
+// Colour identity — used by renderer to pick the right sprite sheet
+typedef enum {
+    GHOST_RED   = 0,
+    GHOST_PINK  = 1,
+    GHOST_CYAN  = 2,
+    GHOST_ORANGE = 3
+} ghost_id_t;
+
+/* ===================== */
+/*   GHOST STRUCT        */
+/* ===================== */
+
+typedef struct {
+    int x;                          // Pixel x position (top-left of sprite)
+    int y;                          // Pixel y position (top-left of sprite)
+    direction_t direction;          // Current movement direction
+    ghost_state_t state;            // Current behavioural state
+    ghost_id_t id;                  // Identity (colour)
+    uint32_t state_ticks_remaining; // Countdown for FRIGHTENED or DEAD states
+    uint8_t anim_frame;             // Current animation frame index
+    uint8_t anim_tick_counter;      // Ticks since last frame change
+    int spawn_x;                    // Pixel x of this ghost's spawn point (for respawn)
+    int spawn_y;                    // Pixel y of this ghost's spawn point
+} ghost_t;
+
+/* ===================== */
+/*   LIFECYCLE           */
+/* ===================== */
+
+/**
+ * Allocates and initialises a ghost at the given pixel position.
+ * `id` sets the ghost's colour identity.
+ * Returns NULL on failure.
+ */
+ghost_t *ghost_create(int x, int y, ghost_id_t id);
+
+/**
+ * Frees all memory associated with the ghost.
+ */
+void ghost_destroy(ghost_t *ghost);
+
+/**
+ * Allocates and initialises all GHOST_COUNT ghosts placed at the
+ * TILE_GHOST_SPAWN tiles found in the map. Fills `ghosts[]`.
+ * Returns the number of ghosts successfully created (≤ GHOST_COUNT).
+ */
+int ghosts_create_all(const map_t *map, ghost_t *ghosts[GHOST_COUNT]);
+
+/**
+ * Destroys and frees all ghosts in the array.
+ */
+void ghosts_destroy_all(ghost_t *ghosts[GHOST_COUNT], int count);
+
+/**
+ * Resets all ghosts to their spawn positions and initial state (CHASE).
+ * Called when the player loses a life, to reset the level without reloading the map. Does not free or reallocate memory.
+ */
+void ghosts_reset_all(ghost_t *ghosts[GHOST_COUNT], int count);
+
+/* ===================== */
+/*   PER-TICK UPDATES    */
+/* ===================== */
+
+/**
+ * Advances the ghost by one tick: handles movement, state countdown,
+ * and animation. Call once per ghost per timer interrupt.
+ */
+void ghost_tick(ghost_t *ghost, const map_t *map);
+
+/**
+ * Advances all ghosts by one tick.
+ */
+void ghosts_tick_all(ghost_t *ghosts[GHOST_COUNT], int count, const map_t *map);
+
+/* ===================== */
+/*   STATE CHANGES       */
+/* ===================== */
+
+/**
+ * Switches the ghost to GHOST_FRIGHTENED state and resets its countdown.
+ * Called when the player collects a power-up.
+ */
+void ghost_frighten(ghost_t *ghost);
+
+/**
+ * Frightens all ghosts at once.
+ */
+void ghosts_frighten_all(ghost_t *ghosts[GHOST_COUNT], int count);
+
+/**
+ * Marks the ghost as eaten (GHOST_DEAD). Resets countdown for respawn.
+ * Called by the game when the player touches a frightened ghost.
+ */
+void ghost_eat(ghost_t *ghost);
+
+/* ===================== */
+/*   COLLISION           */
+/* ===================== */
+
+/**
+ * Returns true if this ghost's bounding box overlaps the player's.
+ * Caller should check ghost->state to decide the outcome
+ * (CHASE → player dies; FRIGHTENED → ghost eaten).
+ */
+bool ghost_collides_with_player(const ghost_t *ghost, const player_t *player);
+
+/**
+ * Checks all ghosts against the player. Returns the index of the first
+ * colliding ghost, or -1 if none. Caller handles the game outcome.
+ */
+int ghosts_check_collision(ghost_t *ghosts[GHOST_COUNT], int count, const player_t *player);
+
+#endif // _GHOST_H_
