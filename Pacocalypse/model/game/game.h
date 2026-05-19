@@ -1,6 +1,9 @@
 #ifndef _GAME_H_
 #define _GAME_H_
 
+#include "map/map.h"
+#include "player/player.h"
+
 typedef enum {
     STATE_MENU,
     STATE_PLAYING,
@@ -11,6 +14,8 @@ typedef enum {
 
 typedef struct {
     game_mode_t mode;
-}
+    player_t *player;
+    map_t *map
+} game_state_t;
 
 #endif // _GAME_H_
