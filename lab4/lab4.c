@@ -87,8 +87,6 @@ int (mouse_test_async)(uint8_t idle_time) {
     int ipc_status, r;
     message msg;
 
-    extern int counter;
-
     // enable data reporting
     if (mouse_enable_dr() != 0) return 1;
 
@@ -121,7 +119,7 @@ int (mouse_test_async)(uint8_t idle_time) {
                         timer_int_handler();
  
                         // check if idle_time seconds have passed since last packet
-                        if ((counter - last_packet_count) >= idle_time * 60)
+                        if ((get_counter() - last_packet_count) >= idle_time * 60)
                             done = true;
                     }
  
@@ -136,7 +134,7 @@ int (mouse_test_async)(uint8_t idle_time) {
                             if (mouse_parse_packet(byte, &pp)) {
                                 mouse_print_packet(&pp);
                                 // reset idle timer on every complete packet
-                                last_packet_count = counter;
+                                last_packet_count = get_counter();
                             }
                         }
                     }
