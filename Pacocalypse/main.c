@@ -7,6 +7,7 @@
 #include "controller/timer/timer.h"
 #include "controller/keyboard/kbc.h"
 #include "controller/mouse/mouse.h"
+#include "model/game/game.h"
 
 int (main)(int argc, char *argv[]) {
   // sets the language of LCF messages (can be either EN-US or PT-PT)
@@ -50,10 +51,19 @@ int (proj_main_loop)(int argc, char *argv[]) {
     if (kbd_subscribe_int(&bit_no)) return 1;
     int irq_set = BIT(bit_no);
 
+    uint8_t timer_bit_no;
+    if (timer_subscribe_int(&timer_bit_no)) return 1;
+    int timer_irq_set = BIT(timer_bit_no);
+
     uint8_t bytes[2];
     int size = 0;
     bool two_byte = false;
     bool done = false;
+
+    game_state_t state;
+    state.mode = STATE_PLAYING;
+    state.player = NULL;
+    state.map = NULL;
 
     while (!done)
     {
@@ -66,6 +76,15 @@ int (proj_main_loop)(int argc, char *argv[]) {
             switch (_ENDPOINT_P(msg.m_source)) {
 
                 case HARDWARE:
+
+                if (msg.m_notify.interrupts & timer_irq_set) {
+                    timer_int_handler();
+                    if (get_counter() % (60 / TICKRATE) == 0) {
+                        if (game_update(&state) != 0) done = true;
+                        if (game_render(&state) != 0) done = true;
+                    }
+                }
+
                 if (msg.m_notify.interrupts & irq_set) {
 
                     kbc_read_scancode();
@@ -107,7 +126,8 @@ int (proj_main_loop)(int argc, char *argv[]) {
     if (kbd_unsubscribe_int() != 0) return 1;
 
     if (vg_exit() != 0) return 1;
-    
+
+    if (timer_unsubscribe_int() != 0) return 1;
 
     return 0;
 }
