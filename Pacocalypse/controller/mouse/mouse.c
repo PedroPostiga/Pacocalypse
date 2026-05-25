@@ -18,26 +18,28 @@ void mouse_set_byte_ready(bool status) {
 }
 
 
-void (mouse_ih)() {
+int (mouse_ih)() {
     uint8_t status;
 
     if (util_sys_inb(MOUSE_STAT_REG, &status) != 0)
-        return;
+        return 1;
 
     if (!(status & OBF) || !(status & AUX))
-        return;
+        return 1;
 
     // always read to clear buffer
     uint8_t byte;
     if (util_sys_inb(MOUSE_DATA_PORT, &byte) != 0)
-        return;
+        return 1;
 
     // only store if no errors
     if (status & (PAR_ERR | TO_ERR))
-        return;
+        return 1;
 
     mouse_byte = byte;
     mouse_byte_ready = true;
+
+    return 0;
 }
 
 
@@ -112,19 +114,17 @@ int (mouse_read_response)(uint8_t *response) {
 
     while (retries > 0) {
         if (util_sys_inb(MOUSE_STAT_REG, &status) != 0)
-            return 1;
+            continue;
 
         if (status & OBF) {
             if (util_sys_inb(MOUSE_DATA_PORT, response) != 0)
-                return 1;
+                continue;
 
             if (status & (PAR_ERR | TO_ERR))
-                return 1;
+                continue;
 
             if (!(status & AUX))
-                return 1;
-
-            return 0;
+                continue;  // not from mouse, ignore
         }
 
         tickdelay(micros_to_ticks(DELAY_US));

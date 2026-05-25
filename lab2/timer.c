@@ -1,5 +1,5 @@
 #include <lcom/lcf.h>
-#include <lcom/timer.h>
+#include "timer.h"
 #include <lcom/utils.h>
 
 #include <stdint.h>
@@ -9,7 +9,7 @@
 static int hook_id = 0;
 static int counter = 0;
 
-int (counter)() {
+int (get_counter)() {
   return counter;
 }
 
@@ -81,7 +81,7 @@ int (timer_unsubscribe_int)() {
   return 0;
 }
 
-void (timer_int_handler)() {
+void (timer_ih)() {
   counter++;
 }
 

@@ -10,6 +10,7 @@
 
 #include "videocard.h"
 #include "../lab3/kbc.h"
+#include "../lab2/timer.h"
 
 int main(int argc, char *argv[]) {
     // sets the language of LCF messages (can be either EN-US or PT-PT)
@@ -59,6 +60,9 @@ int(video_test_rectangle)(uint16_t mode, uint16_t x, uint16_t y,
         
     if (vg_draw_rectangle(x, y, width, height, color) != 0)
         return 1;
+
+    if (vg_flip() != 0)
+        return 1;
     
     int ipc_status, r;
   message msg;
@@ -86,7 +90,7 @@ int(video_test_rectangle)(uint16_t mode, uint16_t x, uint16_t y,
         case HARDWARE:
           if (msg.m_notify.interrupts & irq_set) {
 
-            kbc_read_scancode();
+            kbc_ih();
 
             if (get_scancode_status()) {
 
@@ -164,7 +168,7 @@ int(video_test_xpm)(xpm_map_t xpm, uint16_t x, uint16_t y) {
                 case HARDWARE:
                 if (msg.m_notify.interrupts & irq_set) {
 
-                    kbc_read_scancode();
+                    kbc_ih();
 
                     if (get_scancode_status()) {
 

@@ -13,7 +13,7 @@ int (kbd_subscribe_int)(uint8_t *bit_no);
  
 int (kbd_unsubscribe_int)();
 
-int (kbc_read_scancode)();
+void (kbc_ih)();
 
 int (kbc_write_cmd)(uint8_t cmd);
 
@@ -58,6 +58,11 @@ int (kbc_reenable_interrupts)();
 
 #define ESC_BREAK_CODE 0x81  // ESC key breakcode
 #define TWO_BYTE_CODE  0xE0  // Prefix for 2-byte scancodes
+#define W_MAKE 0X11
+#define A_MAKE 0X1E
+#define S_MAKE 0X1F
+#define D_MAKE 0X20
+#define ESC_MAKE 0x01
 
 /* ===================== */
 /*   KBC COMMANDS        */

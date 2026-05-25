@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "timer.h"
+
 
 int main(int argc, char *argv[]) {
   // sets the language of LCF messages (can be either EN-US or PT-PT)
@@ -66,7 +68,7 @@ int(timer_test_int)(uint8_t time) {
         case HARDWARE:
           if (msg.m_notify.interrupts & irq_set) {
 
-            timer_int_handler();
+            timer_ih();
 
             if ((get_counter()) % 60 == 0) {
               elapsed++;

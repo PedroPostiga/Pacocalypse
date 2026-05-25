@@ -1,4 +1,5 @@
 #include "kbc.h"
+#include "../lab2/timer.h"
 #include <lcom/lcf.h>
 
 static uint8_t scancode;
@@ -19,31 +20,31 @@ void set_scancode_status(bool status) {
 
 
 int (kbd_subscribe_int)(uint8_t *bit_no) {
-    *bit_no = hook_id;
-
     if (sys_irqsetpolicy(KBC_IRQ, IRQ_REENABLE | IRQ_EXCLUSIVE, &hook_id) != 0)
         return 1;
+
+    *bit_no = hook_id;
 
     return 0;
 }
 
-int (kbc_read_scancode)() {
+void (kbc_ih)() {
     uint8_t status;
     
     if (util_sys_inb(KBC_STAT_REG, &status) != 0)
-        return 1;
+        return;
     
     if (status & OBF) {
         if (status & (PAR_ERR | TO_ERR))
-            return 1;  // got data but corrupted
+            return;  // got data but corrupted
         
         util_sys_inb(KBC_DATA_PORT, &scancode);
         scancode_ready = true;
         
-        return 0;  // success
+        return;  // success
     }
     
-    return 1;  // output buffer empty, try again
+    return;  // output buffer empty, try again
 }
 
 

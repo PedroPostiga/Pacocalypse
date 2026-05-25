@@ -1,5 +1,5 @@
 #include "player.h"
-#include "map.h"
+#include "../map/map.h"
 #include <stdlib.h>
 #include <stddef.h>
 
@@ -48,8 +48,8 @@ static bool can_move_to(const map_t *map, int px, int py) {
     };
 
     for (int i = 0; i < 4; i++) {
-        int col = (corners[i][0] - MAP_OFFSET_X) / TILE_SIZE;
-        int row = (corners[i][1] - MAP_OFFSET_Y) / TILE_SIZE;
+        int col, row;
+        map_tile_from_pixel(corners[i][0], corners[i][1], &row, &col);
         if (!map_is_walkable(map, row, col))
             return false;
     }
@@ -195,9 +195,6 @@ bool player_die(player_t *player, const map_t *map) {
     if (player->lives > 0)
         player->lives--;
 
-    if (player->lives == 0)
-        return false;  // Game over
-
     // Reset position to spawn
     int spawn_x, spawn_y;
     if (find_spawn(map, &spawn_x, &spawn_y)) {
@@ -213,6 +210,9 @@ bool player_die(player_t *player, const map_t *map) {
     player->anim_frame              = 0;
     player->anim_tick_counter       = 0;
     player->alive                   = true;
+
+    if (player->lives == 0)
+        return false;  // Game over
 
     return true;  // Still has lives
 }
@@ -234,8 +234,7 @@ void player_get_tile(const player_t *player, int *row, int *col) {
     int centre_x = player->x + TILE_SIZE / 2;
     int centre_y = player->y + TILE_SIZE / 2;
 
-    *col = (centre_x - MAP_OFFSET_X) / TILE_SIZE;
-    *row = (centre_y - MAP_OFFSET_Y) / TILE_SIZE;
+    map_tile_from_pixel(centre_x, centre_y, row, col);
 }
 
 bool player_collides_with(const player_t *player, int x, int y, int w, int h) {

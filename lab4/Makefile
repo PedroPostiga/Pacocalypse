@@ -8,7 +8,6 @@ SRCS = lab4.c mouse.c
 # "-Wall -Wextra -Werror -I . -std=c11 -Wno-unused-parameter" are already set
 CFLAGS += -pedantic
 CFLAGS += -DLAB4
-CFLAGS += -I/home/lcom/labs/lab2
 
 
 # list of library dependencies (for Lab 2, only LCF library)

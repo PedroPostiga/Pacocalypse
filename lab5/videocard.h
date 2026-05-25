@@ -11,6 +11,8 @@
 #define VBE_GET_MODE_INFO 0x4F01  /* Return VBE Mode Info */
 #define VBE_GET_CTRL_INFO 0x4F00  /* Return VBE Controller Info */
 #define BIOS_SET_VIDEO_MODE_AH 0x00 /* BIOS Set Video Mode function AH value */
+#define VBE_SET_DISPLAY_START 0x4F07 /* Set display start address */
+#define SET_DISPLAY_START_BL 0x80
 
 /* VBE BX register flags for Set Mode */
 #define VBE_LINEAR_FB   BIT(14) /* Use linear frame buffer */
@@ -30,6 +32,7 @@ int (vg_draw_pixel)(uint16_t x, uint16_t y, uint32_t color);
 int (vg_draw_hline)(uint16_t x, uint16_t y, uint16_t len, uint32_t color);
 int (vg_draw_rectangle)(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint32_t color);
 int (vg_draw_xpm)(xpm_map_t xpm, uint16_t x, uint16_t y);
+int (vg_flip)();
 
 
 #endif /* _VIDEOCARD_H_ */

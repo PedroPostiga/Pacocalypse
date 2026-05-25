@@ -94,3 +94,13 @@ void map_collect_pellet(map_t *map, int row, int col) {
 bool map_all_pellets_collected(const map_t *map) {
     return map->pellets_remaining == 0;
 }
+
+void map_tile_from_pixel(int x, int y, int *row, int *col) {
+    if (x < MAP_OFFSET_X || y < MAP_OFFSET_Y) {
+        *row = -1;
+        *col = -1;
+        return;
+    }
+    *col = (x - MAP_OFFSET_X) / TILE_SIZE;
+    *row = (y - MAP_OFFSET_Y) / TILE_SIZE;
+}
