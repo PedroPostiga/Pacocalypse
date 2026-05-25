@@ -1,4 +1,5 @@
 #include <lcom/lcf.h>
+#include "../lab2/timer.h"
 
 #include <lcom/lab3.h>
 
@@ -58,7 +59,7 @@ int(kbd_test_scan)() {
         case HARDWARE:
           if (msg.m_notify.interrupts & irq_set) {
 
-            kbc_read_scancode();
+            kbc_ih();
 
             if (get_scancode_status()) {
 
@@ -107,7 +108,7 @@ int(kbd_test_poll)() {
 
 
   while (!done) {
-    kbc_read_scancode();
+    kbc_ih();
 
     if (get_scancode_status()) {
       set_scancode_status(false);
@@ -179,7 +180,7 @@ int(kbd_test_timed_scan)(uint8_t n) {
 
           // timer interrupt
           if (msg.m_notify.interrupts & timer_irq_set) {
-            timer_int_handler();
+            timer_ih();
 
             if ((get_counter() - last_scancode_count) >= n * 60)
               done = true;
@@ -187,7 +188,7 @@ int(kbd_test_timed_scan)(uint8_t n) {
 
           // keyboard interrupt
           if (msg.m_notify.interrupts & kbd_irq_set) {
-            kbc_read_scancode();
+            kbc_ih();
 
             if (get_scancode_status()) {
               set_scancode_status(false);

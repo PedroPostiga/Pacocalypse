@@ -2,12 +2,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "controller/videocard/videocard.h"
-#include "controller/rtc/rtc.h"
-#include "controller/timer/timer.h"
-#include "controller/keyboard/kbc.h"
-#include "controller/mouse/mouse.h"
+#include "../lab2/timer.h"
+#include "../lab3/kbc.h"
+#include "../lab4/mouse.h"
+#include "../lab5/videocard.h"
 #include "model/game/game.h"
+#include "model/player/player.h"
+#include "model/ghost/ghost.h"
+#include "view/renderer/renderer.h"
 
 int (main)(int argc, char *argv[]) {
   // sets the language of LCF messages (can be either EN-US or PT-PT)
@@ -33,101 +35,131 @@ int (main)(int argc, char *argv[]) {
   return 0;
 }
 
+int setup(uint8_t *timer_bit_no, uint8_t *kbd_bit_no, uint8_t *mouse_bit_no) {
+
+    if (timer_set_frequency(0, TICKRATE) != 0)
+        return 1;
+    
+    if (vg_init(VIDEO_MODE) == NULL)
+        return 1;
+
+    if (vge_set_mode(VIDEO_MODE) != 0)
+        return 1;
+    
+    if (timer_subscribe_int(timer_bit_no) != 0)
+        return 1;
+    
+    if (kbd_subscribe_int(kbd_bit_no) != 0)
+        return 1;
+
+    if (mouse_subscribe_int(mouse_bit_no) != 0)
+        return 1;
+    
+    if (mouse_enable_dr() != 0)
+        return 1;
+    
+    if (renderer_init() != 0)
+        return 1;
+
+    printf("Setup complete\n");
+    
+    return 0;
+}
+
 int (proj_main_loop)(int argc, char *argv[]) {
 
-    if (vg_init(0x105) == NULL)
+    uint8_t timer_bit_no, kbd_bit_no, mouse_bit_no;
+    if (setup(&timer_bit_no, &kbd_bit_no, &mouse_bit_no) != 0)
         return 1;
     
-    if (vge_set_mode(0x105) != 0)
+    game_state_t game_state;
+    if (game_init(&game_state) != 0) {
+        printf("Failed to initialize game state\n");
         return 1;
-        
-    if (vg_draw_rectangle(100, 100, 200, 200, 0xF) != 0)
-        return 1;
-    
-    int ipc_status, r;
+    }
+
+    renderer_draw_game(&game_state); // initial render
+
     message msg;
-    
-    uint8_t bit_no;
-    if (kbd_subscribe_int(&bit_no)) return 1;
-    int irq_set = BIT(bit_no);
-
-    uint8_t timer_bit_no;
-    if (timer_subscribe_int(&timer_bit_no)) return 1;
-    int timer_irq_set = BIT(timer_bit_no);
-
-    uint8_t bytes[2];
-    int size = 0;
-    bool two_byte = false;
+    int ipc_status;
     bool done = false;
 
-    game_state_t state;
-    state.mode = STATE_PLAYING;
-    state.player = NULL;
-    state.map = NULL;
-
-    while (!done)
-    {
-        if ((r = driver_receive(ANY, &msg, &ipc_status)) != 0) {
-            printf("driver_receive failed: %d\n", r);
+    while (!done) {
+        if (driver_receive(ANY, &msg, &ipc_status) != 0) {
+            printf("driver_receive failed\n");
             continue;
         }
 
         if (is_ipc_notify(ipc_status)) {
             switch (_ENDPOINT_P(msg.m_source)) {
-
                 case HARDWARE:
-
-                if (msg.m_notify.interrupts & timer_irq_set) {
-                    timer_int_handler();
-                    if (get_counter() % (60 / TICKRATE) == 0) {
-                        if (game_update(&state) != 0) done = true;
-                        if (game_render(&state) != 0) done = true;
-                    }
-                }
-
-                if (msg.m_notify.interrupts & irq_set) {
-
-                    kbc_read_scancode();
-
-                    if (get_scancode_status()) {
-
-                        set_scancode_status(false);
-
-                        uint8_t scancode = get_scancode();
-
-                        if (scancode == 0xE0) {
-                            two_byte = true;
-                            bytes[0] = scancode;
-                            size = 1;
+                    if (msg.m_notify.interrupts & BIT(timer_bit_no)) {
+                        timer_ih();
+                        if (game_update(&game_state) != 0) {
+                            printf("Error updating game state\n");
+                            done = true;
                         }
-                        else {
-                            if (two_byte) {
-                            bytes[1] = scancode;
-                            size = 2;
-                            two_byte = false;
-                            }
-                            else {
-                            bytes[0] = scancode;
-                            size = 1;
-                            }
-
-                            if (scancode == ESC_BREAK_CODE) done = true;
+                        if (game_state.mode == STATE_QUIT) {
+                            done = true;
                         }
                     }
-                }
-                break;
+                    if (msg.m_notify.interrupts & BIT(kbd_bit_no)) {
+                        kbc_ih(); // error handling keyboard interrupt
 
+                        if (get_scancode_status()) {
+                            set_scancode_status(false);
+
+                            uint8_t scancode = get_scancode();
+
+                            switch (game_state.mode) {
+                            case STATE_PLAYING:
+                                switch (scancode) {
+                                    case W_MAKE: player_set_direction(game_state.player, DIR_UP); break;
+                                    case A_MAKE: player_set_direction(game_state.player, DIR_LEFT); break;
+                                    case S_MAKE: player_set_direction(game_state.player, DIR_DOWN); break;
+                                    case D_MAKE: player_set_direction(game_state.player, DIR_RIGHT); break;
+                                    case ESC_MAKE: game_state.mode = STATE_PAUSED; break;
+                                    default: break;
+                                }
+                                break;
+                            case STATE_PAUSED:
+                                if (scancode == ESC_MAKE) {
+                                    game_state.mode = STATE_PLAYING;
+                                }
+                                break;
+                            default:
+                                break;
+                            }
+                        }
+                    }
+                    if (msg.m_notify.interrupts & BIT(mouse_bit_no)) {
+                        mouse_ih(); // error handling mouse interrupt
+
+                        struct packet pp;
+                        
+                        if (mouse_get_byte_ready()) {
+                            mouse_set_byte_ready(false);
+                            uint8_t byte = mouse_get_byte();
+
+                            if (mouse_parse_packet(byte, &pp)) {
+                                // handle mouse packet (e.g., for menu navigation)
+                                
+                            }
+                        }
+                        
+                    }
+                    break;
                 default:
-                break;
+                    break;
             }
         }
     }
-
+    if (mouse_unsubscribe_int() != 0) return 1;
+    if (mouse_disable_data_reporting() != 0) return 1;
     if (kbd_unsubscribe_int() != 0) return 1;
-
-    if (vg_exit() != 0) return 1;
-
     if (timer_unsubscribe_int() != 0) return 1;
+    game_cleanup(&game_state); 
+    if (vg_exit() != 0) return 1;
 
     return 0;
 }

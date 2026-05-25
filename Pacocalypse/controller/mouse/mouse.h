@@ -81,7 +81,7 @@
 /* ===================== */
 
 // Interrupt handler
-void (mouse_ih)();
+int (mouse_ih)();
 
 // Getters and setters
 uint8_t mouse_get_byte();

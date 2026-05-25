@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "map.h"
+#include "../map/map.h"
 
 /* ===================== */
 /*   PLAYER CONSTANTS    */

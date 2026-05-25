@@ -1,9 +1,14 @@
 #ifndef _GAME_H_
 #define _GAME_H_
 #define TICKRATE 60
+#define TICKS_PER_UPDATE 1
+#define VIDEO_MODE 0x105
 
-#include "map/map.h"
-#include "player/player.h"
+#include "../map/map.h"
+#include "../player/player.h"
+#include "../ghost/ghost.h"
+#include "../../../lab4/mouse.h"
+#include <stdlib.h>
 
 typedef enum {
     STATE_MENU,
@@ -17,11 +22,14 @@ typedef struct {
     game_mode_t mode;
     player_t *player;
     map_t *map;
+    ghost_t *ghosts[GHOST_COUNT]; // Assuming a maximum of 4 ghosts
+    int num_ghosts;
 } game_state_t;
 
-
+int game_init(game_state_t* state);
+void game_cleanup(game_state_t* state);
+void game_handle_mouse(game_state_t* state, struct packet* mouse_packet);
 int game_update(game_state_t* state);
 
-int game_render(game_state_t* state);
 
 #endif // _GAME_H_

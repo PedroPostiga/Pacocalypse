@@ -1,18 +1,15 @@
 # name of the program (Minix service)
 PROG=proj
 
-.PATH: ${.CURDIR}/controller
-.PATH: ${.CURDIR}/controller/rtc
-.PATH: ${.CURDIR}/controller/timer
-.PATH: ${.CURDIR}/controller/keyboard
-.PATH: ${.CURDIR}/controller/mouse
-.PATH: ${.CURDIR}/controller/videocard
 .PATH: ${.CURDIR}/model
 .PATH: ${.CURDIR}/model/game
 .PATH: ${.CURDIR}/model/map
+.PATH: ${.CURDIR}/model/player
+.PATH: ${.CURDIR}/model/ghost
+.PATH: ${.CURDIR}/view/renderer
 
 # source code files to be compiled
-SRCS = main.c rtc.c timer.c kbc.c mouse.c videocard.c utils.c game.c map.c player.c
+SRCS = main.c game.c map.c player.c ghost.c renderer.c
 
 # additional compilation flags
 # "-Wall -Wextra -Werror -I . -std=c11 -Wno-unused-parameter" are already set
@@ -21,7 +18,7 @@ CFLAGS += -pedantic
 
 # list of library dependencies 
 DPADD += ${LIBLCF} 
-LDADD += -llcf 
+LDADD += -llcf -L/home/lcom/labs/lab5 -lvideocard -L/home/lcom/labs/lab4 -lmouse -L/home/lcom/labs/lab3 -lkbd -L/home/lcom/labs/lab2 -ltimer
 
 
 # include LCOM's makefile that does all the "heavy lifting"

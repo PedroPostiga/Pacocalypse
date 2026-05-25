@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include "mouse.h"
 
+#include "../lab2/timer.h"
+
 // Any header files included below this line should have been created by you
 
 int main(int argc, char *argv[]) {
@@ -116,7 +118,7 @@ int (mouse_test_async)(uint8_t idle_time) {
  
                     // timer interrupt
                     if (msg.m_notify.interrupts & timer_irq_set) {
-                        timer_int_handler();
+                        timer_ih();
  
                         // check if idle_time seconds have passed since last packet
                         if ((get_counter() - last_packet_count) >= idle_time * 60)

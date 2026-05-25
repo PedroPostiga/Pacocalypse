@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "map.h"
-#include "player.h"
+#include "../map/map.h"
+#include "../player/player.h"
 
 /* ===================== */
 /*   GHOST CONSTANTS     */

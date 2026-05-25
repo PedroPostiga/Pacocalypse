@@ -1,6 +1,6 @@
 #include "ghost.h"
-#include "map.h"
-#include "player.h"
+#include "../map/map.h"
+#include "../player/player.h"
 #include <stdlib.h>
 #include <stddef.h>
 
@@ -46,8 +46,8 @@ static bool can_move_to(const map_t *map, int px, int py) {
     };
 
     for (int i = 0; i < 4; i++) {
-        int col = (corners[i][0] - MAP_OFFSET_X) / TILE_SIZE;
-        int row = (corners[i][1] - MAP_OFFSET_Y) / TILE_SIZE;
+        int col, row;
+        map_tile_from_pixel(corners[i][0], corners[i][1], &row, &col);
         if (!map_is_walkable(map, row, col))
             return false;
     }
