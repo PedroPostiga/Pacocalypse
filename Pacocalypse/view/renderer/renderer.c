@@ -6,6 +6,7 @@
 #include "renderer.h"
 #include "../../../lab5/videocard.h"
 #include "../../model/game/game.h"
+#include "cursor.xpm"
 
 static vbe_mode_info_t vmi;
 
@@ -68,6 +69,11 @@ static void renderer_draw_ghost(ghost_t* const ghosts[GHOST_COUNT]) {
     }
 }
 
+static void renderer_draw_mouse(int mouse_x, int mouse_y) {
+    // Draw cursor using pre-rendered XPM for better performance
+    vg_draw_xpm((xpm_map_t)cursor_xpm, mouse_x, mouse_y);
+}
+
 int renderer_init(void) {
     return vbe_get_mode_info(VIDEO_MODE, &vmi) != 0;
 }
@@ -102,6 +108,9 @@ void renderer_draw_game(const game_state_t* state) {
         case STATE_QUIT:
             break;
     }
+    
+    // Draw mouse cursor on top of everything
+    renderer_draw_mouse(state->mouse_x, state->mouse_y);
 
     vg_flip();
 }
