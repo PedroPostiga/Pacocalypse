@@ -3,6 +3,7 @@
 #define TICKRATE 60
 #define TICKS_PER_UPDATE 1
 #define VIDEO_MODE 0x105
+#define CURSOR_SIZE 10
 
 #include "../map/map.h"
 #include "../player/player.h"
@@ -24,6 +25,8 @@ typedef struct {
     map_t *map;
     ghost_t *ghosts[GHOST_COUNT]; // Assuming a maximum of 4 ghosts
     int num_ghosts;
+    int mouse_x;
+    int mouse_y;
 } game_state_t;
 
 int game_init(game_state_t* state);
