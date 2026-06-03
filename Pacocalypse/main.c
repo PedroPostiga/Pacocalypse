@@ -52,16 +52,14 @@ int setup(uint8_t *timer_bit_no, uint8_t *kbd_bit_no, uint8_t *mouse_bit_no) {
     if (kbd_subscribe_int(kbd_bit_no) != 0)
         return 1;
 
-    if (mouse_subscribe_int(mouse_bit_no) != 0)
+    if (mouse_enable_data_reporting() != 0)
         return 1;
-    
-    if (mouse_enable_dr() != 0)
+
+    if (mouse_subscribe_int(mouse_bit_no) != 0)
         return 1;
     
     if (renderer_init() != 0)
         return 1;
-
-    printf("Setup complete\n");
     
     return 0;
 }
