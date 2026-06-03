@@ -1,5 +1,5 @@
 /* XPM */
-static char * cyan_ghost_left__xpm[] = {
+static char * cyan_ghost_left_xpm[] = {
 "32 32 4 1",
 " 	c None",
 ".	c #6AC3E6",

@@ -48,10 +48,6 @@ void game_handle_mouse(game_state_t* state, struct packet* mouse_packet) {
     state->mouse_x += dx;
     state->mouse_y -= dy;  // Invert Y for screen coordinates
     
-    // Clamp to screen boundaries (assuming 1024x768 resolution)
-    const int SCREEN_WIDTH = 1024;
-    const int SCREEN_HEIGHT = 768;
-    
     if (state->mouse_x < 0) state->mouse_x = 0;
     if (state->mouse_x > SCREEN_WIDTH - CURSOR_SIZE) state->mouse_x = SCREEN_WIDTH - CURSOR_SIZE;
     if (state->mouse_y < 0) state->mouse_y = 0;

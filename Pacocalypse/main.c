@@ -10,6 +10,7 @@
 #include "model/player/player.h"
 #include "model/ghost/ghost.h"
 #include "view/renderer/renderer.h"
+#include "view/sprite.h"
 
 int (main)(int argc, char *argv[]) {
   // sets the language of LCF messages (can be either EN-US or PT-PT)
@@ -59,6 +60,9 @@ int setup(uint8_t *timer_bit_no, uint8_t *kbd_bit_no, uint8_t *mouse_bit_no) {
         return 1;
     
     if (renderer_init() != 0)
+        return 1;
+    
+    if (load_sprites() != 0)
         return 1;
     
     return 0;
@@ -156,7 +160,9 @@ int (proj_main_loop)(int argc, char *argv[]) {
     if (mouse_disable_data_reporting() != 0) return 1;
     if (kbd_unsubscribe_int() != 0) return 1;
     if (timer_unsubscribe_int() != 0) return 1;
-    game_cleanup(&game_state); 
+    game_cleanup(&game_state);
+    if (renderer_cleanup() != 0) return 1;
+    if (destroy_sprites() != 0) return 1;
     if (vg_exit() != 0) return 1;
 
     return 0;

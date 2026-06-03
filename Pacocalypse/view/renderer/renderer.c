@@ -6,7 +6,7 @@
 #include "renderer.h"
 #include "../../../lab5/videocard.h"
 #include "../../model/game/game.h"
-#include "cursor.xpm"
+#include "../sprite.h"
 
 static vbe_mode_info_t vmi;
 
@@ -71,7 +71,7 @@ static void renderer_draw_ghost(ghost_t* const ghosts[GHOST_COUNT]) {
 
 static void renderer_draw_mouse(int mouse_x, int mouse_y) {
     // Draw cursor using pre-rendered XPM for better performance
-    vg_draw_xpm((xpm_map_t)cursor_xpm, mouse_x, mouse_y);
+    sprite_draw(cursor, mouse_x, mouse_y);
 }
 
 int renderer_init(void) {

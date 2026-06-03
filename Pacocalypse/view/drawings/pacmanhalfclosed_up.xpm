@@ -1,5 +1,5 @@
 /* XPM */
-static char * pacmanhalfclosed_xpm[] = {
+static char * pacmanhalfclosed_up_xpm[] = {
 "32 32 3 1",
 " 	c None",
 ".	c #000000",

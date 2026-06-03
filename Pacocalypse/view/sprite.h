@@ -43,6 +43,7 @@ sprite_t* pebble;
 sprite_t* power_up;
 sprite_t* map;
 sprite_t* menu_bg;
+sprite_t* cursor;
 
 animated_sprite_t* ghost_eyes;
 animated_sprite_t* player_anim_up;
