@@ -6,9 +6,18 @@
 #include "renderer.h"
 #include "../../../lab5/videocard.h"
 #include "../../model/game/game.h"
+#include "../sprite.h"
 #include "cursor.xpm"
 
 static vbe_mode_info_t vmi;
+
+static void renderer_draw_tile_sprite(const sprite_t* sprite, int x, int y) {
+    if (!sprite) return;
+
+    draw_sprite(sprite,
+                x + (TILE_SIZE - sprite->width) / 2,
+                y + (TILE_SIZE - sprite->height) / 2);
+}
 
 static void renderer_draw_map(const map_t* map) {
     for (int row = 0; row < MAP_ROWS; row++) {
@@ -23,16 +32,12 @@ static void renderer_draw_map(const map_t* map) {
                     break;
                 case TILE_PELLET:
                     if (!tile.collected) {
-                        int s = 4;
-                        vg_draw_rectangle(x + (TILE_SIZE / 2) - (s / 2), y + (TILE_SIZE - s) / 2,
-                                          s, s, 0xFFFFCC);
+                        renderer_draw_tile_sprite(pebble, x, y);
                     }
                     break;
                 case TILE_POWER_UP:
                     if (!tile.collected) {
-                        int s = 10;
-                        vg_draw_rectangle(x + (TILE_SIZE / 2) - (s / 2), y + (TILE_SIZE - s) / 2,
-                                          s, s, 0xFF6600);
+                        renderer_draw_tile_sprite(power_up, x, y);
                     }
                     break;
                 default:
@@ -44,7 +49,17 @@ static void renderer_draw_map(const map_t* map) {
 
 static void renderer_draw_player(const player_t* player) {
     if (!player || !player->alive) return;
-    vg_draw_rectangle(player->x, player->y, TILE_SIZE, TILE_SIZE, 0xFFFF00);
+    
+    animated_sprite_t *anim = player_anim_right;
+
+    switch (player->direction) {
+        case DIR_UP: anim = player_anim_up; break;
+        case DIR_DOWN: anim = player_anim_down; break;
+        case DIR_LEFT: anim = player_anim_left; break;
+        case DIR_RIGHT: anim = player_anim_right; break;
+    }
+
+    draw_sprite(animated_sprite_get_current_frame(anim), player->x, player->y);
 }
 
 static uint32_t ghost_color(const ghost_t* ghost) {
@@ -64,8 +79,26 @@ static uint32_t ghost_color(const ghost_t* ghost) {
 static void renderer_draw_ghost(ghost_t* const ghosts[GHOST_COUNT]) {
     for (int i = 0; i < GHOST_COUNT; i++) {
         ghost_t *ghost = ghosts[i];
-        if (!ghost || ghost->state == GHOST_DEAD) continue;
-        vg_draw_rectangle(ghost->x, ghost->y, TILE_SIZE, TILE_SIZE, ghost_color(ghost));
+        if (!ghost) continue;
+
+        animated_sprite_t *anim = NULL;
+
+        if (ghost->state == GHOST_FRIGHTENED) {
+            anim = frightened_ghost_anim;
+        } else if (ghost->state == GHOST_DEAD) {
+            anim = ghost_eyes;
+        } else {
+            switch (ghost->id) {
+                case GHOST_RED: anim = ghost_red; break;
+                case GHOST_PINK: anim = ghost_pink; break;
+                case GHOST_CYAN: anim = ghost_cyan; break;
+                case GHOST_ORANGE: anim = ghost_orange; break;
+            }
+        }
+
+        if (anim) {
+            draw_sprite(animated_sprite_get_current_frame(anim), ghost->x, ghost->y);
+        }
     }
 }
 
