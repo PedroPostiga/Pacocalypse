@@ -10,6 +10,14 @@
 
 static vbe_mode_info_t vmi;
 
+static void renderer_draw_tile_sprite(const sprite_t* sprite, int x, int y) {
+    if (!sprite) return;
+
+    draw_sprite(sprite,
+                x + (TILE_SIZE - sprite->width) / 2,
+                y + (TILE_SIZE - sprite->height) / 2);
+}
+
 static void renderer_draw_map(const map_t* map) {
     for (int row = 0; row < MAP_ROWS; row++) {
         for (int col = 0; col < MAP_COLS; col++) {
@@ -23,16 +31,12 @@ static void renderer_draw_map(const map_t* map) {
                     break;
                 case TILE_PELLET:
                     if (!tile.collected) {
-                        int s = 4;
-                        vg_draw_rectangle(x + (TILE_SIZE / 2) - (s / 2), y + (TILE_SIZE - s) / 2,
-                                          s, s, 0xFFFFCC);
+                        renderer_draw_tile_sprite(pebble, x, y);
                     }
                     break;
                 case TILE_POWER_UP:
                     if (!tile.collected) {
-                        int s = 10;
-                        vg_draw_rectangle(x + (TILE_SIZE / 2) - (s / 2), y + (TILE_SIZE - s) / 2,
-                                          s, s, 0xFF6600);
+                        renderer_draw_tile_sprite(power_up, x, y);
                     }
                     break;
                 default:
