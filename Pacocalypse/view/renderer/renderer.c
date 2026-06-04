@@ -69,9 +69,9 @@ static void renderer_draw_ghost(ghost_t* const ghosts[GHOST_COUNT]) {
     }
 }
 
-static void renderer_draw_mouse(int mouse_x, int mouse_y) {
+static void renderer_draw_mouse(int mouse_x, int mouse_y, sprite_t* cursor_sprite) {
     // Draw cursor using pre-rendered XPM for better performance
-    sprite_draw(cursor, mouse_x, mouse_y);
+    draw_sprite(cursor_sprite, mouse_x, mouse_y);
 }
 
 int renderer_init(void) {
@@ -82,7 +82,7 @@ void renderer_cleanup() {
     /* Nothing to free here: rendering is handled by lab5's videocard library. */
 }
 
-void renderer_draw_game(const game_state_t* state) {
+void renderer_draw_game(const game_state_t* state, game_sprites_t sprites) {
     if (!state) return;
 
     vg_draw_rectangle(0, 0, vmi.XResolution, vmi.YResolution, 0x111111);
@@ -110,7 +110,29 @@ void renderer_draw_game(const game_state_t* state) {
     }
     
     // Draw mouse cursor on top of everything
-    renderer_draw_mouse(state->mouse_x, state->mouse_y);
+    renderer_draw_mouse(state->mouse_x, state->mouse_y, sprites.cursor);
 
     vg_flip();
+}
+
+
+int draw_sprite(const sprite_t* sprite, int x, int y) {
+    if (!sprite) return -1;
+    
+    uint8_t *color = sprite->pixmap;
+
+    for (int j = 0; j < sprite->height; j++) {
+        for (int i = 0; i < sprite->width; i++) {
+            uint8_t pixel = color[j * sprite->width + i];
+            if (pixel != 0) { // Assuming 0 is transparent
+                vg_draw_pixel(x + i, y + j, pixel);
+            }
+        }
+    }
+    return 0;
+}
+
+int draw_animated_sprite(const animated_sprite_t* sprite) {
+    if (!sprite) return -1;
+    return draw_sprite(sprite->frames[sprite->current_pixmap], sprite->x, sprite->y);
 }
