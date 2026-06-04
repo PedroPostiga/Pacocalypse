@@ -3,18 +3,47 @@
 
 #define POWER_UP_CLICK_RADIUS 96
 
-static void game_update_animations(void) {
-    if (player_anim_up) animated_sprite_update(player_anim_up);
-    if (player_anim_down) animated_sprite_update(player_anim_down);
-    if (player_anim_left) animated_sprite_update(player_anim_left);
-    if (player_anim_right) animated_sprite_update(player_anim_right);
+/* Maps a direction_t to the ghost sprite frame index.
+ * Ghost frames are loaded as: [0]=up, [1]=right, [2]=down, [3]=left.
+ * DIR_NONE falls back to the right-facing frame (index 1). */
+static uint8_t direction_to_ghost_frame(direction_t dir) {
+    switch (dir) {
+        case DIR_UP:    return 0;
+        case DIR_RIGHT: return 1;
+        case DIR_DOWN:  return 2;
+        case DIR_LEFT:  return 3;
+        default:        return 1; /* DIR_NONE → right (idle pose) */
+    }
+}
 
-    if (ghost_red) animated_sprite_update(ghost_red);
-    if (ghost_pink) animated_sprite_update(ghost_pink);
-    if (ghost_cyan) animated_sprite_update(ghost_cyan);
-    if (ghost_orange) animated_sprite_update(ghost_orange);
-    if (frightened_ghost_anim) animated_sprite_update(frightened_ghost_anim);
-    if (ghost_eyes) animated_sprite_update(ghost_eyes);
+static void game_update_animations(game_state_t *state) {
+    game_sprites_t *sp = state->sprites;
+    if (!sp) return;
+
+    /* Player: classic looping animation */
+    if (sp->player_anim_up)    animated_sprite_update(sp->player_anim_up);
+    if (sp->player_anim_down)  animated_sprite_update(sp->player_anim_down);
+    if (sp->player_anim_left)  animated_sprite_update(sp->player_anim_left);
+    if (sp->player_anim_right) animated_sprite_update(sp->player_anim_right);
+
+    /* Ghosts: set current frame from the ghost's current direction */
+    animated_sprite_t *ghost_sprites[GHOST_COUNT] = {
+        sp->ghost_red,
+        sp->ghost_pink,
+        sp->ghost_cyan,
+        sp->ghost_orange
+    };
+    for (int i = 0; i < state->num_ghosts; i++) {
+        ghost_t *g = state->ghosts[i];
+        animated_sprite_t *anim = ghost_sprites[g->id];
+        if (g && anim) {
+            anim->current_pixmap = direction_to_ghost_frame(g->direction);
+        }
+    }
+
+    /* Frightened and eyes sprites keep their looping animation */
+    if (sp->frightened_ghost_anim) animated_sprite_update(sp->frightened_ghost_anim);
+    if (sp->ghost_eyes)            animated_sprite_update(sp->ghost_eyes);
 }
 
 static void game_check_collectibles(game_state_t* state) {
@@ -86,7 +115,12 @@ int game_init(game_state_t* state) {
     state->num_ghosts = ghosts_create_all(state->map, state->ghosts);
     state->mouse_x = 512;  // Center of 1024x768 screen
     state->mouse_y = 384;
-
+    state->sprites = NULL;
+    
+    if (state->player == NULL || state->map == NULL) {
+        return 1; // error handling
+    }
+    
     if (state->num_ghosts == 0) {
         player_destroy(state->player);
         map_destroy(state->map);
@@ -142,7 +176,7 @@ int game_update(game_state_t* state) { // updates the state of the game, each on
         case STATE_MENU:
             break;
         case STATE_PLAYING: 
-            game_update_animations();
+            game_update_animations(state);
             player_tick_animation(state->player);
             player_tick_power_up(state->player);
             player_move(state->player, state->map);

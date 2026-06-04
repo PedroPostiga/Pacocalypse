@@ -120,41 +120,68 @@ sprite_t* animated_sprite_get_current_frame(animated_sprite_t* sprite) {
     return sprite->frames[sprite->current_pixmap];
 }
 
-game_sprites_t load_sprites() {
-    game_sprites_t game_sprites;
+int load_sprites(game_sprites_t **sprites) {
+    if (!sprites) return 1;
 
-    game_sprites.pebble = sprite_create((xpm_map_t)pebble_xpm);
-    game_sprites.power_up = sprite_create((xpm_map_t)power_up_xpm);
-    game_sprites.map = sprite_create((xpm_map_t)map_xpm);
-    game_sprites.menu_bg = sprite_create((xpm_map_t)menu_background_xpm);
-    game_sprites.cursor = sprite_create((xpm_map_t)cursor_xpm);
+    game_sprites_t *loaded = malloc(sizeof(game_sprites_t));
+    if (!loaded) return 1;
 
-    game_sprites.ghost_eyes = animated_sprite_create((xpm_map_t[]){eyes_up_xpm, eyes_right_xpm, eyes_down_xpm, eyes_left_xpm}, 4, 10, 0, 0);
-    game_sprites.player_anim_up = animated_sprite_create((xpm_map_t[]){pacmanmouthclosed_xpm, pacmanhalfclosed_up_xpm, pacmanmouthopen_up_xpm}, 3, 5, 0, 0);
-    game_sprites.player_anim_down = animated_sprite_create((xpm_map_t[]){pacmanmouthclosed_xpm, pacmanhalfclosed_down_xpm, pacmanmouthopen_down_xpm}, 3, 5, 0, 0);
-    game_sprites.player_anim_left = animated_sprite_create((xpm_map_t[]){pacmanmouthclosed_xpm, pacmanhalfclosed_left_xpm, pacmanmouthopen_left_xpm}, 3, 5, 0, 0);
-    game_sprites.player_anim_right = animated_sprite_create((xpm_map_t[]){pacmanmouthclosed_xpm, pacmanhalfclosed_right_xpm, pacmanmouthopen_right_xpm}, 3, 5, 0, 0);
-    game_sprites.ghost_cyan = animated_sprite_create((xpm_map_t[]){cyan_ghost_up_xpm, cyan_ghost_xpm, cyan_ghost_down_xpm, cyan_ghost_left_xpm}, 4, 10, 0, 0);
-    game_sprites.ghost_red = animated_sprite_create((xpm_map_t[]){red_ghost_up_xpm, red_ghost_xpm, red_ghost_down_xpm, red_ghost_left_xpm}, 4, 10, 0, 0);
-    game_sprites.ghost_pink = animated_sprite_create((xpm_map_t[]){pink_ghost_up_xpm, pink_ghost_xpm, pink_ghost_down_xpm, pink_ghost_left_xpm}, 4, 10, 0, 0);
-    game_sprites.ghost_orange = animated_sprite_create((xpm_map_t[]){orange_ghost_up_xpm, orange_ghost_xpm, orange_ghost_down_xpm, orange_ghost_left_xpm}, 4, 10, 0, 0);
-    game_sprites.frightened_ghost_anim = animated_sprite_create((xpm_map_t[]){ghost_scared_blue_xpm, ghost_scared_white_xpm}, 2, 10, 0, 0);
+    *loaded = (game_sprites_t){0};
+
+    loaded->pebble = sprite_create((xpm_map_t)pebble_xpm);
+    loaded->power_up = sprite_create((xpm_map_t)power_up_xpm);
+    loaded->map = sprite_create((xpm_map_t)map_xpm);
+    loaded->menu_bg = sprite_create((xpm_map_t)menu_background_xpm);
+    loaded->cursor = sprite_create((xpm_map_t)cursor_xpm);
+
+    if (!loaded->pebble || !loaded->power_up || !loaded->map || !loaded->menu_bg || !loaded->cursor) {
+        destroy_sprites(&loaded);
+        return 1;
+    }
+
+    loaded->ghost_eyes = animated_sprite_create((xpm_map_t[]){eyes_up_xpm, eyes_right_xpm, eyes_down_xpm, eyes_left_xpm}, 4, 10, 0, 0);
+    loaded->player_anim_up = animated_sprite_create((xpm_map_t[]){pacmanmouthclosed_xpm, pacmanhalfclosed_up_xpm, pacmanmouthopen_up_xpm}, 3, 5, 0, 0);
+    loaded->player_anim_down = animated_sprite_create((xpm_map_t[]){pacmanmouthclosed_xpm, pacmanhalfclosed_down_xpm, pacmanmouthopen_down_xpm}, 3, 5, 0, 0);
+    loaded->player_anim_left = animated_sprite_create((xpm_map_t[]){pacmanmouthclosed_xpm, pacmanhalfclosed_left_xpm, pacmanmouthopen_left_xpm}, 3, 5, 0, 0);
+    loaded->player_anim_right = animated_sprite_create((xpm_map_t[]){pacmanmouthclosed_xpm, pacmanhalfclosed_right_xpm, pacmanmouthopen_right_xpm}, 3, 5, 0, 0);
+    loaded->ghost_cyan = animated_sprite_create((xpm_map_t[]){cyan_ghost_up_xpm, cyan_ghost_xpm, cyan_ghost_down_xpm, cyan_ghost_left_xpm}, 4, 10, 0, 0);
+    loaded->ghost_red = animated_sprite_create((xpm_map_t[]){red_ghost_up_xpm, red_ghost_xpm, red_ghost_down_xpm, red_ghost_left_xpm}, 4, 10, 0, 0);
+    loaded->ghost_pink = animated_sprite_create((xpm_map_t[]){pink_ghost_up_xpm, pink_ghost_xpm, pink_ghost_down_xpm, pink_ghost_left_xpm}, 4, 10, 0, 0);
+    loaded->ghost_orange = animated_sprite_create((xpm_map_t[]){orange_ghost_up_xpm, orange_ghost_xpm, orange_ghost_down_xpm, orange_ghost_left_xpm}, 4, 10, 0, 0);
+    loaded->frightened_ghost_anim = animated_sprite_create((xpm_map_t[]){ghost_scared_blue_xpm, ghost_scared_white_xpm}, 2, 10, 0, 0);
+
+    if (!loaded->ghost_eyes || !loaded->player_anim_up || !loaded->player_anim_down || !loaded->player_anim_left || !loaded->player_anim_right ||
+        !loaded->ghost_cyan || !loaded->ghost_red || !loaded->ghost_pink || !loaded->ghost_orange || !loaded->frightened_ghost_anim) {
+        destroy_sprites(&loaded);
+        return 1;
+    }
+
+    *sprites = loaded;
+    return 0;
 }
 
-void destroy_sprites(game_sprites_t game_sprites) {
-    sprite_destroy(game_sprites.pebble);
-    sprite_destroy(game_sprites.power_up);
-    sprite_destroy(game_sprites.map);
-    sprite_destroy(game_sprites.menu_bg);
+void destroy_sprites(game_sprites_t **sprites) {
+    if (!sprites || !*sprites) return;
 
-    animated_sprite_destroy(game_sprites.ghost_eyes);
-    animated_sprite_destroy(game_sprites.player_anim_up);
-    animated_sprite_destroy(game_sprites.player_anim_down);
-    animated_sprite_destroy(game_sprites.player_anim_left);
-    animated_sprite_destroy(game_sprites.player_anim_right);
-    animated_sprite_destroy(game_sprites.ghost_cyan);
-    animated_sprite_destroy(game_sprites.ghost_red);
-    animated_sprite_destroy(game_sprites.ghost_pink);
-    animated_sprite_destroy(game_sprites.ghost_orange);
-    animated_sprite_destroy(game_sprites.frightened_ghost_anim);
+    game_sprites_t *s = *sprites;
+
+    sprite_destroy(s->pebble);
+    sprite_destroy(s->power_up);
+    sprite_destroy(s->map);
+    sprite_destroy(s->menu_bg);
+    sprite_destroy(s->cursor);
+
+    animated_sprite_destroy(s->ghost_eyes);
+    animated_sprite_destroy(s->player_anim_up);
+    animated_sprite_destroy(s->player_anim_down);
+    animated_sprite_destroy(s->player_anim_left);
+    animated_sprite_destroy(s->player_anim_right);
+    animated_sprite_destroy(s->ghost_cyan);
+    animated_sprite_destroy(s->ghost_red);
+    animated_sprite_destroy(s->ghost_pink);
+    animated_sprite_destroy(s->ghost_orange);
+    animated_sprite_destroy(s->frightened_ghost_anim);
+
+    free(s);
+    *sprites = NULL;
 }
