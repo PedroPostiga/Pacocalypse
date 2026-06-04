@@ -6,6 +6,8 @@
 #include "renderer.h"
 #include "../../../lab5/videocard.h"
 #include "../../model/game/game.h"
+#include "../../model/map/map.h"
+#include "../hud.h"
 #include "../sprite.h"
 
 static vbe_mode_info_t vmi;
@@ -132,11 +134,13 @@ void renderer_draw_game(const game_state_t* state) {
             renderer_draw_map(state->map, state->sprites);
             renderer_draw_ghost(state->ghosts, state->sprites);
             renderer_draw_player(state->player, state->sprites);
+            hud_draw(state->player, state->game_font);
             break;
         case STATE_PAUSED:
             renderer_draw_map(state->map, state->sprites);
             renderer_draw_ghost(state->ghosts, state->sprites);
             renderer_draw_player(state->player, state->sprites);
+            hud_draw(state->player, state->game_font);
             vg_draw_rectangle(vmi.XResolution / 2 - 100,
                               vmi.YResolution / 2 - 30,
                               200, 60, 0x333333);
