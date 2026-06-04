@@ -31,29 +31,33 @@ void animated_sprite_update(animated_sprite_t* sprite);
 
 sprite_t* animated_sprite_get_current_frame(animated_sprite_t* sprite);
 
-void load_sprites();
+game_sprites_t load_sprites();
 
-void destroy_sprites();
+void destroy_sprites(game_sprites_t game_sprites);
 
-int draw_sprite(const sprite_t* sprite, int x, int y);
 
-int draw_animated_sprite(const animated_sprite_t* sprite);
+typedef struct {
 
-sprite_t* pebble;
-sprite_t* power_up;
-sprite_t* map;
-sprite_t* menu_bg;
+    // make union later for backound and map if needed
+    sprite_t* menu_bg;
+    sprite_t* map;
 
-animated_sprite_t* ghost_eyes;
-animated_sprite_t* player_anim_up;
-animated_sprite_t* player_anim_down;
-animated_sprite_t* player_anim_left;
-animated_sprite_t* player_anim_right;
-animated_sprite_t* ghost_cyan;
-animated_sprite_t* ghost_red;
-animated_sprite_t* ghost_pink;
-animated_sprite_t* ghost_orange;
-animated_sprite_t* frightened_ghost_anim;
+    sprite_t* pebble;
+    sprite_t* power_up;
+    sprite_t* cursor;
+
+    animated_sprite_t* ghost_eyes;
+    animated_sprite_t* player_anim_up;
+    animated_sprite_t* player_anim_down;
+    animated_sprite_t* player_anim_left;
+    animated_sprite_t* player_anim_right;
+    animated_sprite_t* ghost_cyan;
+    animated_sprite_t* ghost_red;
+    animated_sprite_t* ghost_pink;
+    animated_sprite_t* ghost_orange;
+    animated_sprite_t* frightened_ghost_anim;
+
+} game_sprites_t;
 
 
 #endif // _SPRITE_H_
