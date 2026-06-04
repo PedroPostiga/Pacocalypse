@@ -97,6 +97,25 @@ static void renderer_draw_mouse(int mouse_x, int mouse_y, sprite_t* cursor_sprit
     draw_sprite(cursor_sprite, mouse_x, mouse_y);
 }
 
+static void renderer_draw_pause_overlay(font_t *font) {
+    const int overlay_width = 200;
+    const int overlay_height = 60;
+    const int overlay_x = vmi.XResolution / 2 - overlay_width / 2;
+    const int overlay_y = vmi.YResolution / 2 - overlay_height / 2;
+    const char *pause_text = "PAUSED";
+
+    vg_draw_rectangle(overlay_x, overlay_y, overlay_width, overlay_height, 0x333333);
+
+    if (font) {
+        int text_width = strlen(pause_text) * font->tile_size;
+        int text_height = font->tile_size;
+        int text_x = overlay_x + (overlay_width - text_width) / 2;
+        int text_y = overlay_y + (overlay_height - text_height) / 2;
+
+        draw_string(font, pause_text, text_x, text_y);
+    }
+}
+
 
 int renderer_init(void) {
     return vbe_get_mode_info(VIDEO_MODE, &vmi) != 0;
@@ -141,9 +160,7 @@ void renderer_draw_game(const game_state_t* state) {
             renderer_draw_ghost(state->ghosts, state->sprites);
             renderer_draw_player(state->player, state->sprites);
             hud_draw(state->player, state->game_font);
-            vg_draw_rectangle(vmi.XResolution / 2 - 100,
-                              vmi.YResolution / 2 - 30,
-                              200, 60, 0x333333);
+            renderer_draw_pause_overlay(state->game_font);
             break;
         case STATE_GAME_OVER:
             break;
