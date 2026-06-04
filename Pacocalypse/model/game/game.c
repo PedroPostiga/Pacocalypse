@@ -147,9 +147,9 @@ int game_init(game_state_t* state) {
 
     // Setup centered paused button
     state->paused_button.x = (SCREEN_WIDTH - 200) / 2;
-    state->paused_button.y = (SCREEN_HEIGHT - 60) / 2;
+    state->paused_button.y = 300;
     state->paused_button.width = 200;
-    state->paused_button.height = 60;
+    state->paused_button.height = 50;
     state->paused_button.sp = NULL;
     state->paused_button.hover_sp = NULL;
     state->paused_button.font = state->game_font;
@@ -160,13 +160,13 @@ int game_init(game_state_t* state) {
     if (state->player == NULL || state->map == NULL) {
         return 1; // error handling
     }
-    
+
     if (state->num_ghosts == 0) {
         player_destroy(state->player);
         map_destroy(state->map);
         return 1; // must have at least one ghost
     }
-    
+
     return 0; // success
 }
 
@@ -183,25 +183,25 @@ void game_cleanup(game_state_t* state) {
 
 void game_handle_mouse(game_state_t* state, struct packet* mouse_packet) {
     if (!state || !mouse_packet) return;
-    
+
     // Extract signed X and Y movements from packet
     int8_t dx = (int8_t) mouse_packet->bytes[1];
     int8_t dy = (int8_t) mouse_packet->bytes[2];
-    
+
     // Handle X overflow
     if (mouse_packet->bytes[0] & BIT(6)) {  // MOUSE_X_OVF
         dx = (dx > 0) ? 127 : -128;
     }
-    
+
     // Handle Y overflow (inverted because mouse y increases downward)
     if (mouse_packet->bytes[0] & BIT(7)) {  // MOUSE_Y_OVF
         dy = (dy > 0) ? 127 : -128;
     }
-    
+
     // Update mouse position
     state->mouse_x += dx;
     state->mouse_y -= dy;  // Invert Y for screen coordinates
-    
+
     if (state->mouse_x < 0) state->mouse_x = 0;
     if (state->mouse_x > SCREEN_WIDTH - CURSOR_SIZE) state->mouse_x = SCREEN_WIDTH - CURSOR_SIZE;
     if (state->mouse_y < 0) state->mouse_y = 0;
@@ -219,18 +219,20 @@ void game_handle_mouse(game_state_t* state, struct packet* mouse_packet) {
         } else if (state->mode == STATE_PAUSED) {
             if (button_is_hovered(&state->paused_button, state->mouse_x, state->mouse_y)) {
                 state->mode = STATE_PLAYING;
+            } else if (button_is_hovered(&state->quit_button, state->mouse_x, state->mouse_y)) {
+                state->mode = STATE_QUIT;
             }
         }
     }
 }
 
-int game_update(game_state_t* state) { // updates the state of the game, each one of the cases changes what updates should happen 60times/sec    
+int game_update(game_state_t* state) { // updates the state of the game, each one of the cases changes what updates should happen 60times/sec
     if (!state) return 1;
 
     switch (state->mode) {
         case STATE_MENU:
             break;
-        case STATE_PLAYING: 
+        case STATE_PLAYING:
             game_update_animations(state);
             player_tick_animation(state->player);
             player_tick_power_up(state->player);

@@ -141,13 +141,14 @@ void renderer_draw_game(const game_state_t* state) {
             renderer_draw_player(state->player, state->sprites);
             hud_draw(state->player, state->game_font);
             renderer_draw_button(&state->paused_button, state->mouse_x, state->mouse_y);
+            renderer_draw_button(&state->quit_button, state->mouse_x, state->mouse_y);
             break;
         case STATE_GAME_OVER:
             break;
         case STATE_QUIT:
             break;
     }
-    
+
     // Draw mouse cursor on top of everything
     renderer_draw_mouse(state->mouse_x, state->mouse_y, state->sprites->cursor);
 
@@ -157,7 +158,7 @@ void renderer_draw_game(const game_state_t* state) {
 
 int draw_sprite(const sprite_t* sprite, int x, int y) {
     if (!sprite) return -1;
-    
+
     uint32_t *color = (uint32_t *) sprite->pixmap;
     uint32_t transparent = xpm_transparency_color(XPM_8_8_8_8);
 
