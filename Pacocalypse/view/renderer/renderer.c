@@ -105,6 +105,12 @@ int renderer_cleanup() {
     return 0;
 }
 
+void renderer_draw_button(const button_t *btn, int mouse_x, int mouse_y) {
+    if (!btn) return;
+    bool is_hovered = button_is_hovered(btn, mouse_x, mouse_y);
+    button_draw(btn, is_hovered);
+}
+
 void renderer_draw_game(const game_state_t* state) {
     if (!state || !state->sprites) return;
 
@@ -112,7 +118,15 @@ void renderer_draw_game(const game_state_t* state) {
 
     switch (state->mode) {
         case STATE_MENU:
-            draw_sprite(state->sprites->menu_bg, 0, 0);
+            if (state->sprites->menu_bg) {
+                int bg_x = (vmi.XResolution - state->sprites->menu_bg->width) / 2;
+                int bg_y = (vmi.YResolution - state->sprites->menu_bg->height) / 2;
+                if (bg_x < 0) bg_x = 0;
+                if (bg_y < 0) bg_y = 0;
+                draw_sprite(state->sprites->menu_bg, bg_x, bg_y);
+            }
+            renderer_draw_button(&state->play_button, state->mouse_x, state->mouse_y);
+            renderer_draw_button(&state->quit_button, state->mouse_x, state->mouse_y);
             break;
         case STATE_PLAYING:
             renderer_draw_map(state->map, state->sprites);

@@ -7,13 +7,16 @@
 #include "sprite.h"
 
 typedef enum {
-    PURE_WHITE = 0xffffff,
-    MILD_GREEN = 0x00008800
+    MILD_GREEN = 0x00008800,
+    DARK_GRAY = 0x333333,
+    CRIMSON_RED = 0xaa0000
 } button_color_t;
 
 typedef struct {
     int x; // Added coordinates since sprite_t doesn't have them
     int y;
+    int width;
+    int height;
     sprite_t *sp;
     sprite_t *hover_sp;
     char text[100];
@@ -28,7 +31,7 @@ typedef struct {
  * @param b pointer to the button_t structure
  * @param hover true if the button is currently being hovered
  */
-void button_draw(button_t *b, bool hover);
+void button_draw(const button_t *b, bool hover);
 
 /**
  * @brief Checks if the mouse coordinates are inside the button's boundaries
@@ -38,6 +41,6 @@ void button_draw(button_t *b, bool hover);
  * @param mouse_y the y coordinate of the mouse
  * @return true if mouse is hovering over the button, false otherwise
  */
-bool button_is_hovered(button_t *b, int mouse_x, int mouse_y);
+bool button_is_hovered(const button_t *b, int mouse_x, int mouse_y);
 
 #endif // _BUTTON_H_

@@ -1,5 +1,6 @@
 #include "font.h"
-#include "../../../lab5/videocard.h"
+#include "../../lab5/videocard.h"
+#include "renderer/renderer.h"
 #include <lcom/lcf.h>
 #include <stdlib.h>
 #include <string.h>
@@ -93,7 +94,7 @@ static void font_init_sheet_map(font_t *font) {
 
         font->tiles[i]->width = tile_size;
         font->tiles[i]->height = tile_size;
-        font->tiles[i]->pixmap = malloc(tile_size * tile_size);
+        font->tiles[i]->pixmap = malloc(tile_size * tile_size * sizeof(uint32_t));
 
         if (!font->tiles[i]->pixmap) {
             for (uint32_t j = 0; j <= i; j++) {
@@ -106,10 +107,12 @@ static void font_init_sheet_map(font_t *font) {
             return NULL;
         }
 
+        uint32_t *src_pixels = (uint32_t *)full_font->pixmap;
+        uint32_t *dst_pixels = (uint32_t *)font->tiles[i]->pixmap;
+
         for (uint16_t y = 0; y < tile_size; y++) {
             for (uint16_t x = 0; x < tile_size; x++) {
-                uint8_t pixel = full_font->pixmap[(src_y + y) * full_font->width + (src_x + x)];
-                font->tiles[i]->pixmap[y * tile_size + x] = pixel;
+                dst_pixels[y * tile_size + x] = src_pixels[(src_y + y) * full_font->width + (src_x + x)];
             }
         }
     }
@@ -141,21 +144,12 @@ int draw_char(font_t* font, char c, int x, int y) {
 
     uint32_t char_index = font->char_map[(uint8_t)c];
     if (char_index == UINT32_MAX || char_index >= font->num_tiles)
-        return -1;
+        return 0; // return 0 so we skip drawing but don't abort the string
 
     sprite_t *ch = font->tiles[char_index];
     if (!ch || !ch->pixmap) return -1;
 
-    for (int j = 0; j < ch->height; j++) {
-        for (int i = 0; i < ch->width; i++) {
-            uint8_t pixel = ch->pixmap[j * ch->width + i];
-            if (pixel != 0) {
-                vg_draw_pixel(x + i, y + j, pixel);
-            }
-        }
-    }
-
-    return 0;
+    return draw_sprite(ch, x, y);
 }
 
 int draw_string(font_t* font, const char* text, int x, int y) {
@@ -165,7 +159,7 @@ int draw_string(font_t* font, const char* text, int x, int y) {
 
     for (int i = 0; text[i] != '\0'; i++) {
         if (draw_char(font, text[i], cx, y) != 0)
-            return -1;
+            return -1; // Only fail if a real drawing error occurs, not spaces
 
         cx += font->tile_size;
     }

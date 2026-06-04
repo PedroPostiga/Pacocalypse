@@ -13,4 +13,6 @@ int draw_sprite(const sprite_t* sprite, int x, int y);
 
 int draw_animated_sprite(const animated_sprite_t* sprite);
 
+void renderer_draw_button(const button_t *btn, int mouse_x, int mouse_y);
+
 #endif // _RENDERER_H_

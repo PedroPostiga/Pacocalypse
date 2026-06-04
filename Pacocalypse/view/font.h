@@ -10,7 +10,7 @@
 
 #include <stdlib.h>
 
-#include "../sprite.h"
+#include "sprite.h"
 
 
 
