@@ -18,7 +18,7 @@ static void renderer_draw_tile_sprite(const sprite_t* sprite, int x, int y) {
                 y + (TILE_SIZE - sprite->height) / 2);
 }
 
-static void renderer_draw_map(const map_t* map) {
+static void renderer_draw_map(const map_t* map, const game_sprites_t *sprites) {
     for (int row = 0; row < MAP_ROWS; row++) {
         for (int col = 0; col < MAP_COLS; col++) {
             tile_t tile = map->tiles[row][col];
@@ -31,12 +31,12 @@ static void renderer_draw_map(const map_t* map) {
                     break;
                 case TILE_PELLET:
                     if (!tile.collected) {
-                        renderer_draw_tile_sprite(pebble, x, y);
+                        renderer_draw_tile_sprite(sprites->pebble, x, y);
                     }
                     break;
                 case TILE_POWER_UP:
                     if (!tile.collected) {
-                        renderer_draw_tile_sprite(power_up, x, y);
+                        renderer_draw_tile_sprite(sprites->power_up, x, y);
                     }
                     break;
                 default:
@@ -115,12 +115,12 @@ void renderer_draw_game(const game_state_t* state) {
             draw_sprite(state->sprites->menu_bg, 0, 0);
             break;
         case STATE_PLAYING:
-            renderer_draw_map(state->map);
+            renderer_draw_map(state->map, state->sprites);
             renderer_draw_ghost(state->ghosts, state->sprites);
             renderer_draw_player(state->player, state->sprites);
             break;
         case STATE_PAUSED:
-            renderer_draw_map(state->map);
+            renderer_draw_map(state->map, state->sprites);
             renderer_draw_ghost(state->ghosts, state->sprites);
             renderer_draw_player(state->player, state->sprites);
             vg_draw_rectangle(vmi.XResolution / 2 - 100,
@@ -143,12 +143,13 @@ void renderer_draw_game(const game_state_t* state) {
 int draw_sprite(const sprite_t* sprite, int x, int y) {
     if (!sprite) return -1;
     
-    uint8_t *color = sprite->pixmap;
+    uint32_t *color = (uint32_t *) sprite->pixmap;
+    uint32_t transparent = xpm_transparency_color(XPM_8_8_8_8);
 
     for (int j = 0; j < sprite->height; j++) {
         for (int i = 0; i < sprite->width; i++) {
-            uint8_t pixel = color[j * sprite->width + i];
-            if (pixel != 0) { // Assuming 0 is transparent
+            uint32_t pixel = color[j * sprite->width + i];
+            if (pixel != transparent) {
                 vg_draw_pixel(x + i, y + j, pixel);
             }
         }

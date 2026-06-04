@@ -1,5 +1,4 @@
 #include "sprite.h"
-#include "../../../lab5/videocard.h"
 #include "drawings/cyan_ghost.xpm"
 #include "drawings/cyan_ghost_down.xpm"
 #include "drawings/cyan_ghost_left.xpm"
@@ -11,7 +10,6 @@
 #include "drawings/ghost_scared_blue.xpm"
 #include "drawings/ghost_scared_white.xpm"
 #include "drawings/map.xpm"
-#include "drawings/menu_background.xpm"
 #include "drawings/orange_ghost.xpm"
 #include "drawings/orange_ghost_down.xpm"
 #include "drawings/orange_ghost_left.xpm"
@@ -39,6 +37,8 @@
 #include "drawings/cursor.xpm"
 
 #include <lcom/lcf.h>
+#include <stdio.h>
+#include <string.h>
 
 sprite_t *sprite_create(xpm_map_t sprite) {
     sprite_t *s = malloc (sizeof(sprite_t));
@@ -46,7 +46,7 @@ sprite_t *sprite_create(xpm_map_t sprite) {
 
     xpm_image_t img;
 
-    uint8_t *pixmap = xpm_load(sprite, XPM_INDEXED, &img);
+    uint8_t *pixmap = xpm_load(sprite, XPM_8_8_8_8, &img);
 
     if (!pixmap) {
         free(s);
@@ -126,7 +126,8 @@ int load_sprites(game_sprites_t **sprites) {
     game_sprites_t *loaded = malloc(sizeof(game_sprites_t));
     if (!loaded) return 1;
 
-    *loaded = (game_sprites_t){0};
+    // Zero-initialize the struct safely
+    memset(loaded, 0, sizeof(*loaded));
 
     loaded->pebble = sprite_create((xpm_map_t)pebble_xpm);
     loaded->power_up = sprite_create((xpm_map_t)power_up_xpm);
@@ -139,16 +140,35 @@ int load_sprites(game_sprites_t **sprites) {
         return 1;
     }
 
-    loaded->ghost_eyes = animated_sprite_create((xpm_map_t[]){eyes_up_xpm, eyes_right_xpm, eyes_down_xpm, eyes_left_xpm}, 4, 10, 0, 0);
-    loaded->player_anim_up = animated_sprite_create((xpm_map_t[]){pacmanmouthclosed_xpm, pacmanhalfclosed_up_xpm, pacmanmouthopen_up_xpm}, 3, 5, 0, 0);
-    loaded->player_anim_down = animated_sprite_create((xpm_map_t[]){pacmanmouthclosed_xpm, pacmanhalfclosed_down_xpm, pacmanmouthopen_down_xpm}, 3, 5, 0, 0);
-    loaded->player_anim_left = animated_sprite_create((xpm_map_t[]){pacmanmouthclosed_xpm, pacmanhalfclosed_left_xpm, pacmanmouthopen_left_xpm}, 3, 5, 0, 0);
-    loaded->player_anim_right = animated_sprite_create((xpm_map_t[]){pacmanmouthclosed_xpm, pacmanhalfclosed_right_xpm, pacmanmouthopen_right_xpm}, 3, 5, 0, 0);
-    loaded->ghost_cyan = animated_sprite_create((xpm_map_t[]){cyan_ghost_up_xpm, cyan_ghost_xpm, cyan_ghost_down_xpm, cyan_ghost_left_xpm}, 4, 10, 0, 0);
-    loaded->ghost_red = animated_sprite_create((xpm_map_t[]){red_ghost_up_xpm, red_ghost_xpm, red_ghost_down_xpm, red_ghost_left_xpm}, 4, 10, 0, 0);
-    loaded->ghost_pink = animated_sprite_create((xpm_map_t[]){pink_ghost_up_xpm, pink_ghost_xpm, pink_ghost_down_xpm, pink_ghost_left_xpm}, 4, 10, 0, 0);
-    loaded->ghost_orange = animated_sprite_create((xpm_map_t[]){orange_ghost_up_xpm, orange_ghost_xpm, orange_ghost_down_xpm, orange_ghost_left_xpm}, 4, 10, 0, 0);
-    loaded->frightened_ghost_anim = animated_sprite_create((xpm_map_t[]){ghost_scared_blue_xpm, ghost_scared_white_xpm}, 2, 10, 0, 0);
+    xpm_map_t ghost_eyes_xpms[] = { (xpm_map_t)eyes_up_xpm, (xpm_map_t)eyes_right_xpm, (xpm_map_t)eyes_down_xpm, (xpm_map_t)eyes_left_xpm };
+    loaded->ghost_eyes = animated_sprite_create(ghost_eyes_xpms, 4, 10, 0, 0);
+
+    xpm_map_t player_up_xpms[] = { (xpm_map_t)pacmanmouthclosed_xpm, (xpm_map_t)pacmanhalfclosed_up_xpm, (xpm_map_t)pacmanmouthopen_up_xpm };
+    loaded->player_anim_up = animated_sprite_create(player_up_xpms, 3, 5, 0, 0);
+
+    xpm_map_t player_down_xpms[] = { (xpm_map_t)pacmanmouthclosed_xpm, (xpm_map_t)pacmanhalfclosed_down_xpm, (xpm_map_t)pacmanmouthopen_down_xpm };
+    loaded->player_anim_down = animated_sprite_create(player_down_xpms, 3, 5, 0, 0);
+
+    xpm_map_t player_left_xpms[] = { (xpm_map_t)pacmanmouthclosed_xpm, (xpm_map_t)pacmanhalfclosed_left_xpm, (xpm_map_t)pacmanmouthopen_left_xpm };
+    loaded->player_anim_left = animated_sprite_create(player_left_xpms, 3, 5, 0, 0);
+
+    xpm_map_t player_right_xpms[] = { (xpm_map_t)pacmanmouthclosed_xpm, (xpm_map_t)pacmanhalfclosed_right_xpm, (xpm_map_t)pacmanmouthopen_right_xpm };
+    loaded->player_anim_right = animated_sprite_create(player_right_xpms, 3, 5, 0, 0);
+
+    xpm_map_t ghost_cyan_xpms[] = { (xpm_map_t)cyan_ghost_up_xpm, (xpm_map_t)cyan_ghost_xpm, (xpm_map_t)cyan_ghost_down_xpm, (xpm_map_t)cyan_ghost_left_xpm };
+    loaded->ghost_cyan = animated_sprite_create(ghost_cyan_xpms, 4, 10, 0, 0);
+
+    xpm_map_t ghost_red_xpms[] = { (xpm_map_t)red_ghost_up_xpm, (xpm_map_t)red_ghost_xpm, (xpm_map_t)red_ghost_down_xpm, (xpm_map_t)red_ghost_left_xpm };
+    loaded->ghost_red = animated_sprite_create(ghost_red_xpms, 4, 10, 0, 0);
+
+    xpm_map_t ghost_pink_xpms[] = { (xpm_map_t)pink_ghost_up_xpm, (xpm_map_t)pink_ghost_xpm, (xpm_map_t)pink_ghost_down_xpm, (xpm_map_t)pink_ghost_left_xpm };
+    loaded->ghost_pink = animated_sprite_create(ghost_pink_xpms, 4, 10, 0, 0);
+
+    xpm_map_t ghost_orange_xpms[] = { (xpm_map_t)orange_ghost_up_xpm, (xpm_map_t)orange_ghost_xpm, (xpm_map_t)orange_ghost_down_xpm, (xpm_map_t)orange_ghost_left_xpm };
+    loaded->ghost_orange = animated_sprite_create(ghost_orange_xpms, 4, 10, 0, 0);
+
+    xpm_map_t frightened_xpms[] = { (xpm_map_t)ghost_scared_blue_xpm, (xpm_map_t)ghost_scared_white_xpm };
+    loaded->frightened_ghost_anim = animated_sprite_create(frightened_xpms, 2, 10, 0, 0);
 
     if (!loaded->ghost_eyes || !loaded->player_anim_up || !loaded->player_anim_down || !loaded->player_anim_left || !loaded->player_anim_right ||
         !loaded->ghost_cyan || !loaded->ghost_red || !loaded->ghost_pink || !loaded->ghost_orange || !loaded->frightened_ghost_anim) {

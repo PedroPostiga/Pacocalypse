@@ -4,7 +4,7 @@ static char *cursor_xpm[] = {
 "16 16 2 1",
 /* colors */
 ". c #FFFFFF",
-" c None",
+"  c None",
 /* pixels */
 "        .       ",
 "        .       ",
@@ -19,7 +19,7 @@ static char *cursor_xpm[] = {
 "        .       ",
 "        .       ",
 "        .       ",
-"               ",
-"               ",
-"               "
+"                ",
+"                ",
+"                "
 };

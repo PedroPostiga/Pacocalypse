@@ -20,25 +20,27 @@
 #define GHOST_SCATTER_MODE_TICKS 1200 // Duration of scatter mode before chase (20s at 60 Hz)
 
 /* ===================== */
-/*   GHOST STATE         */
-/* ===================== */
-
-typedef enum {
-    GHOST_CHASE,        // Normal roaming movement
-    GHOST_FRIGHTENED,   // Player has power-up active — ghost flees and can be eaten
-    GHOST_DEAD,         // Eaten — waiting to respawn at ghost spawn tile
-    GHOST_RESPAWNING    // Returning to spawn point at double speed
-} ghost_state_t;
-
-/* ===================== */
 /*   GHOST MODE          */
 /* ===================== */
 
-// Mode determines targeting behavior during GHOST_CHASE state
+// Mode determines targeting behavior during chase state
 typedef enum {
     GHOST_MODE_CHASE,   // Target player directly (or prediction)
     GHOST_MODE_SCATTER  // Target own corner (out of bounds)
 } ghost_mode_t;
+
+/* ===================== */
+/*   GHOST STATE         */
+/* ===================== */
+
+// Behavioural state of a ghost. Keep historically-used enum names
+// (GHOST_FRIGHTENED, GHOST_DEAD, ...) for compatibility with callers.
+typedef enum {
+    GHOST_ALIVE, // Normal behaviour; use `mode` to choose targeting
+    GHOST_FRIGHTENED,        // Player has power-up active — ghost flees and can be eaten
+    GHOST_DEAD,              // Eaten — waiting to respawn at ghost spawn tile
+    GHOST_RESPAWNING         // Returning to spawn point at double speed
+} ghost_state_t;
 
 /* ===================== */
 /*   GHOST IDENTITY      */
@@ -177,3 +179,5 @@ void ghosts_set_mode(ghost_t *ghosts[GHOST_COUNT], int count, ghost_mode_t mode)
  * Called when game restarts.
  */
 void ghosts_reset_mode(ghost_t *ghosts[GHOST_COUNT], int count);
+
+#endif // _GHOST_H_

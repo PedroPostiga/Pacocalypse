@@ -154,7 +154,7 @@ static void ghost_move_normal(ghost_t *ghost, const map_t *map, const player_t *
 
     int speed = GHOST_SPEED;
     int dx, dy;
-    int target_x, target_y;
+    int target_x = 0, target_y = 0;
 
     // Determine target position based on mode
     if (ghost->mode == GHOST_MODE_SCATTER) {
@@ -342,11 +342,11 @@ static void ghost_move_respawning(ghost_t *ghost, const map_t *map) {
     // Check if ghost has reached spawn point (within one tile)
     int dist_to_spawn = shortest_distance(ghost->x, ghost->y, ghost->spawn_x, ghost->spawn_y);
     if (dist_to_spawn < TILE_SIZE) {
-        // Snap to exact spawn position and resume chase
+        // Snap to exact spawn position and resume normal (chase) state
         ghost->x = ghost->spawn_x;
         ghost->y = ghost->spawn_y;
         ghost->direction = DIR_LEFT;
-        ghost->state = GHOST_CHASE;
+        ghost->state = GHOST_ALIVE;
         ghost->state_ticks_remaining = 0;
     }
 }
@@ -373,7 +373,7 @@ ghost_t *ghost_create(int x, int y, ghost_id_t id) {
     ghost->spawn_x              = x;
     ghost->spawn_y              = y;
     ghost->direction            = DIR_LEFT;
-    ghost->state                = GHOST_CHASE;
+    ghost->state                = GHOST_ALIVE;
     ghost->mode                 = GHOST_MODE_SCATTER;  // Start in scatter mode (will switch to chase after timer)
     ghost->id                   = id;
     ghost->state_ticks_remaining = 0;
@@ -442,8 +442,8 @@ static void ghost_tick_internal(ghost_t *ghost, const map_t *map,
             ghost_move_frightened(ghost, map);
             if (ghost->state_ticks_remaining > 0)
                 ghost->state_ticks_remaining--;
-            if (ghost->state_ticks_remaining == 0)
-                ghost->state = GHOST_CHASE;
+                if (ghost->state_ticks_remaining == 0)
+                ghost->state = GHOST_ALIVE;
             break;
 
         case GHOST_DEAD:
@@ -458,7 +458,7 @@ static void ghost_tick_internal(ghost_t *ghost, const map_t *map,
             // ghost_move_respawning handles state transition to CHASE when it reaches spawn
             break;
 
-        case GHOST_CHASE:
+        case GHOST_ALIVE:
         default:
             ghost_move_normal(ghost, map, player, ghosts);
             break;

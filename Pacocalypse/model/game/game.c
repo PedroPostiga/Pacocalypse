@@ -67,7 +67,7 @@ static void game_check_ghost_collisions(game_state_t* state) {
             ghost_eat(ghost);
             player_add_score(state->player, SCORE_GHOST_EAT);
         }
-        else if (ghost->state == GHOST_CHASE) {
+            else if (ghost->state == GHOST_ALIVE) {
             if (!player_die(state->player, state->map)) {
                 state->mode = STATE_GAME_OVER;
                 return;

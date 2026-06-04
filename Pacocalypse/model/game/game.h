@@ -2,7 +2,7 @@
 #define _GAME_H_
 #define TICKRATE 60
 #define TICKS_PER_UPDATE 1
-#define VIDEO_MODE 0x105
+#define VIDEO_MODE 0x14C
 #define CURSOR_SIZE 10
 
 #include "../map/map.h"

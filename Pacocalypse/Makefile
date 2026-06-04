@@ -7,9 +7,10 @@ PROG=proj
 .PATH: ${.CURDIR}/model/player
 .PATH: ${.CURDIR}/model/ghost
 .PATH: ${.CURDIR}/view/renderer
+.PATH: ${.CURDIR}/view/
 
 # source code files to be compiled
-SRCS = main.c game.c map.c player.c ghost.c renderer.c
+SRCS = main.c game.c map.c player.c ghost.c renderer.c sprite.c
 
 # additional compilation flags
 # "-Wall -Wextra -Werror -I . -std=c11 -Wno-unused-parameter" are already set
