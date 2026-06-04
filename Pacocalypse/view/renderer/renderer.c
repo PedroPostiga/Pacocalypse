@@ -42,30 +42,47 @@ static void renderer_draw_map(const map_t* map) {
     }
 }
 
-static void renderer_draw_player(const player_t* player) {
-    if (!player || !player->alive) return;
-    vg_draw_rectangle(player->x, player->y, TILE_SIZE, TILE_SIZE, 0xFFFF00);
+static void renderer_draw_player(const player_t* player, const game_sprites_t *sprites) {
+    if (!player || !player->alive || !sprites) return;
+
+    animated_sprite_t *player_anim = NULL;
+    switch (player->direction) {
+        case DIR_UP: player_anim = sprites->player_anim_up; break;
+        case DIR_DOWN: player_anim = sprites->player_anim_down; break;
+        case DIR_LEFT: player_anim = sprites->player_anim_left; break;
+        case DIR_RIGHT: player_anim = sprites->player_anim_right; break;
+        default: player_anim = sprites->player_anim_right; break;
+    }
+
+    if (!player_anim) return;
+    sprite_t *frame = animated_sprite_get_current_frame(player_anim);
+    draw_sprite(frame, player->x, player->y);
 }
 
-static uint32_t ghost_color(const ghost_t* ghost) {
+static animated_sprite_t* renderer_select_ghost_sprite(const ghost_t* ghost, const game_sprites_t *sprites) {
+    if (!ghost || !sprites) return NULL;
     if (ghost->state == GHOST_FRIGHTENED)
-        return 0x0000CC;
-    if (ghost->state == GHOST_DEAD)
-        return 0x000000;
+        return sprites->frightened_ghost_anim;
+
     switch (ghost->id) {
-        case GHOST_RED: return 0xFF0000;
-        case GHOST_PINK: return 0xFFB8FF;
-        case GHOST_CYAN: return 0x00FFFF;
-        case GHOST_ORANGE: return 0xFFB852;
-        default: return 0xFFFFFF;
+        case GHOST_RED: return sprites->ghost_red;
+        case GHOST_PINK: return sprites->ghost_pink;
+        case GHOST_CYAN: return sprites->ghost_cyan;
+        case GHOST_ORANGE: return sprites->ghost_orange;
+        default: return NULL;
     }
 }
 
-static void renderer_draw_ghost(ghost_t* const ghosts[GHOST_COUNT]) {
+static void renderer_draw_ghost(ghost_t* const ghosts[GHOST_COUNT], const game_sprites_t *sprites) {
     for (int i = 0; i < GHOST_COUNT; i++) {
         ghost_t *ghost = ghosts[i];
         if (!ghost || ghost->state == GHOST_DEAD) continue;
-        vg_draw_rectangle(ghost->x, ghost->y, TILE_SIZE, TILE_SIZE, ghost_color(ghost));
+
+        animated_sprite_t *ghost_anim = renderer_select_ghost_sprite(ghost, sprites);
+        if (!ghost_anim) continue;
+
+        sprite_t *frame = animated_sprite_get_current_frame(ghost_anim);
+        draw_sprite(frame, ghost->x, ghost->y);
     }
 }
 
@@ -74,31 +91,34 @@ static void renderer_draw_mouse(int mouse_x, int mouse_y, sprite_t* cursor_sprit
     draw_sprite(cursor_sprite, mouse_x, mouse_y);
 }
 
+
 int renderer_init(void) {
     return vbe_get_mode_info(VIDEO_MODE, &vmi) != 0;
 }
 
-void renderer_cleanup() {
+int renderer_cleanup() {
     /* Nothing to free here: rendering is handled by lab5's videocard library. */
+    return 0;
 }
 
-void renderer_draw_game(const game_state_t* state, game_sprites_t sprites) {
-    if (!state) return;
+void renderer_draw_game(const game_state_t* state) {
+    if (!state || !state->sprites) return;
 
     vg_draw_rectangle(0, 0, vmi.XResolution, vmi.YResolution, 0x111111);
 
     switch (state->mode) {
         case STATE_MENU:
+            draw_sprite(state->sprites->menu_bg, 0, 0);
             break;
         case STATE_PLAYING:
             renderer_draw_map(state->map);
-            renderer_draw_ghost(state->ghosts);
-            renderer_draw_player(state->player);
+            renderer_draw_ghost(state->ghosts, state->sprites);
+            renderer_draw_player(state->player, state->sprites);
             break;
         case STATE_PAUSED:
             renderer_draw_map(state->map);
-            renderer_draw_ghost(state->ghosts);
-            renderer_draw_player(state->player);
+            renderer_draw_ghost(state->ghosts, state->sprites);
+            renderer_draw_player(state->player, state->sprites);
             vg_draw_rectangle(vmi.XResolution / 2 - 100,
                               vmi.YResolution / 2 - 30,
                               200, 60, 0x333333);
@@ -110,7 +130,7 @@ void renderer_draw_game(const game_state_t* state, game_sprites_t sprites) {
     }
     
     // Draw mouse cursor on top of everything
-    renderer_draw_mouse(state->mouse_x, state->mouse_y, sprites.cursor);
+    renderer_draw_mouse(state->mouse_x, state->mouse_y, state->sprites->cursor);
 
     vg_flip();
 }

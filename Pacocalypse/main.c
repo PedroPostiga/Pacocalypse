@@ -62,9 +62,6 @@ int setup(uint8_t *timer_bit_no, uint8_t *kbd_bit_no, uint8_t *mouse_bit_no) {
     if (renderer_init() != 0)
         return 1;
     
-    if (load_sprites() != 0)
-        return 1;
-    
     return 0;
 }
 
@@ -77,6 +74,12 @@ int (proj_main_loop)(int argc, char *argv[]) {
     game_state_t game_state;
     if (game_init(&game_state) != 0) {
         printf("Failed to initialize game state\n");
+        return 1;
+    }
+
+    if (load_sprites(&game_state.sprites) != 0) {
+        printf("Failed to load sprites\n");
+        game_cleanup(&game_state);
         return 1;
     }
 
@@ -161,8 +164,8 @@ int (proj_main_loop)(int argc, char *argv[]) {
     if (kbd_unsubscribe_int() != 0) return 1;
     if (timer_unsubscribe_int() != 0) return 1;
     game_cleanup(&game_state);
+    destroy_sprites(&game_state.sprites);
     if (renderer_cleanup() != 0) return 1;
-    if (destroy_sprites() != 0) return 1;
     if (vg_exit() != 0) return 1;
 
     return 0;

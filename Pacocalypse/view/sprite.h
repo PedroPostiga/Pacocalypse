@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <lcom/lcf.h>
 
 
 typedef struct {
@@ -19,6 +20,24 @@ typedef struct {
     uint8_t tick_count; // counts ticks to determine when to switch frames
 } animated_sprite_t;
 
+typedef struct {
+    sprite_t* menu_bg;
+    sprite_t* map;
+    sprite_t* pebble;
+    sprite_t* power_up;
+    sprite_t* cursor;
+    animated_sprite_t* ghost_eyes;
+    animated_sprite_t* player_anim_up;
+    animated_sprite_t* player_anim_down;
+    animated_sprite_t* player_anim_left;
+    animated_sprite_t* player_anim_right;
+    animated_sprite_t* ghost_cyan;
+    animated_sprite_t* ghost_red;
+    animated_sprite_t* ghost_pink;
+    animated_sprite_t* ghost_orange;
+    animated_sprite_t* frightened_ghost_anim;
+} game_sprites_t;
+
 sprite_t *sprite_create(xpm_map_t sprite);
 
 void sprite_destroy(sprite_t* sprite);
@@ -31,33 +50,8 @@ void animated_sprite_update(animated_sprite_t* sprite);
 
 sprite_t* animated_sprite_get_current_frame(animated_sprite_t* sprite);
 
-game_sprites_t load_sprites();
+int load_sprites(game_sprites_t **sprites);
 
-void destroy_sprites(game_sprites_t game_sprites);
-
-
-typedef struct {
-
-    // make union later for backound and map if needed
-    sprite_t* menu_bg;
-    sprite_t* map;
-
-    sprite_t* pebble;
-    sprite_t* power_up;
-    sprite_t* cursor;
-
-    animated_sprite_t* ghost_eyes;
-    animated_sprite_t* player_anim_up;
-    animated_sprite_t* player_anim_down;
-    animated_sprite_t* player_anim_left;
-    animated_sprite_t* player_anim_right;
-    animated_sprite_t* ghost_cyan;
-    animated_sprite_t* ghost_red;
-    animated_sprite_t* ghost_pink;
-    animated_sprite_t* ghost_orange;
-    animated_sprite_t* frightened_ghost_anim;
-
-} game_sprites_t;
-
+void destroy_sprites(game_sprites_t **sprites);
 
 #endif // _SPRITE_H_

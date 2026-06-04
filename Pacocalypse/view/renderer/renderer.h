@@ -5,11 +5,9 @@
 
 int renderer_init(void);
 
-void renderer_cleanup(void);
+int renderer_cleanup(void);
 
-void renderer_draw_game(const game_state_t* state, game_sprites_t sprites);
-
-static void renderer_draw_mouse(int mouse_x, int mouse_y);
+void renderer_draw_game(const game_state_t* state);
 
 int draw_sprite(const sprite_t* sprite, int x, int y);
 

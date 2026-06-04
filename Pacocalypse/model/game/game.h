@@ -9,6 +9,7 @@
 #include "../player/player.h"
 #include "../ghost/ghost.h"
 #include "../../../lab4/mouse.h"
+#include "../../view/sprite.h"
 #include <stdlib.h>
 
 typedef enum {
@@ -27,6 +28,7 @@ typedef struct {
     int num_ghosts;
     int mouse_x;
     int mouse_y;
+    game_sprites_t *sprites;
 } game_state_t;
 
 int game_init(game_state_t* state);
