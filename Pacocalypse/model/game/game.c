@@ -113,8 +113,8 @@ int game_init(game_state_t* state) {
     }
 
     state->num_ghosts = ghosts_create_all(state->map, state->ghosts);
-    state->mouse_x = 512;  // Center of 1024x768 screen
-    state->mouse_y = 384;
+    state->mouse_x = SCREEN_WIDTH / 2;  // Center of screen
+    state->mouse_y = SCREEN_HEIGHT / 2;
     state->sprites = NULL;
     
     if (state->player == NULL || state->map == NULL) {
