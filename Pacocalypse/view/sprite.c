@@ -35,6 +35,7 @@
 #include "drawings/red_ghost_up.xpm"
 #include "drawings/menu_background.xpm"
 #include "drawings/cursor.xpm"
+#include "drawings/font.xpm"
 
 #include <lcom/lcf.h>
 #include <stdio.h>

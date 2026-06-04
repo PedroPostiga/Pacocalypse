@@ -1,5 +1,6 @@
 #include "game.h"
 #include "../../view/sprite.h"
+#include "../../view/drawings/font.xpm"
 
 #define POWER_UP_CLICK_RADIUS 96
 
@@ -100,7 +101,7 @@ static void game_activate_power_up_at(game_state_t* state, int mouse_x, int mous
 int game_init(game_state_t* state) {
     if (!state) return 1;
 
-    state->mode = STATE_PLAYING;  // CHANGE THIS TO MENU AFTER IMPLEMENTING IT
+    state->mode = STATE_MENU;  // START IN MENU
     state->map = map_create();
     if (state->map == NULL) {
         return 1;
@@ -116,6 +117,34 @@ int game_init(game_state_t* state) {
     state->mouse_x = SCREEN_WIDTH / 2;  // Center of screen
     state->mouse_y = SCREEN_HEIGHT / 2;
     state->sprites = NULL;
+
+    // Load font (tile_size must be 32, as the image is 1408x64 with 44 tiles per row)
+    state->game_font = font_create(32, (xpm_map_t)font_xpm);
+
+    // Setup PLAY button
+    state->play_button.x = (SCREEN_WIDTH - 200) / 2; // centered
+    state->play_button.y = 300;
+    state->play_button.width = 200;
+    state->play_button.height = 50;
+    state->play_button.sp = NULL;
+    state->play_button.hover_sp = NULL;
+    state->play_button.font = state->game_font;
+    state->play_button.back_color = CRIMSON_RED;
+    state->play_button.hover_frame_color = DARK_GRAY;
+    strcpy(state->play_button.text, "PLAY");
+
+    // Setup QUIT button
+    state->quit_button.x = (SCREEN_WIDTH - 200) / 2; // centered
+    state->quit_button.y = 400;
+    state->quit_button.width = 200;
+    state->quit_button.height = 50;
+    state->quit_button.sp = NULL;
+    state->quit_button.hover_sp = NULL;
+    state->quit_button.font = state->game_font;
+    state->quit_button.back_color = MILD_GREEN;
+    state->quit_button.hover_frame_color = DARK_GRAY;
+    strcpy(state->quit_button.text, "QUIT");
+
     
     if (state->player == NULL || state->map == NULL) {
         return 1; // error handling
@@ -131,6 +160,9 @@ int game_init(game_state_t* state) {
 }
 
 void game_cleanup(game_state_t* state) {
+    if (state->game_font) {
+        font_destroy(state->game_font);
+    }
     player_destroy(state->player);
     map_destroy(state->map);
     for (int i = 0; i < state->num_ghosts; i++) {
@@ -165,7 +197,15 @@ void game_handle_mouse(game_state_t* state, struct packet* mouse_packet) {
     if (state->mouse_y > SCREEN_HEIGHT - CURSOR_SIZE) state->mouse_y = SCREEN_HEIGHT - CURSOR_SIZE;
 
     if (mouse_packet->bytes[0] & BIT(0)) {
-        game_activate_power_up_at(state, state->mouse_x, state->mouse_y);
+        if (state->mode == STATE_MENU) {
+            if (button_is_hovered(&state->play_button, state->mouse_x, state->mouse_y)) {
+                state->mode = STATE_PLAYING;
+            } else if (button_is_hovered(&state->quit_button, state->mouse_x, state->mouse_y)) {
+                state->mode = STATE_QUIT;
+            }
+        } else if (state->mode == STATE_PLAYING) {
+            game_activate_power_up_at(state, state->mouse_x, state->mouse_y);
+        }
     }
 }
 
