@@ -145,7 +145,18 @@ int game_init(game_state_t* state) {
     state->quit_button.hover_frame_color = DARK_GRAY;
     strcpy(state->quit_button.text, "QUIT");
 
-    
+    // Setup centered paused button
+    state->paused_button.x = (SCREEN_WIDTH - 200) / 2;
+    state->paused_button.y = (SCREEN_HEIGHT - 60) / 2;
+    state->paused_button.width = 200;
+    state->paused_button.height = 60;
+    state->paused_button.sp = NULL;
+    state->paused_button.hover_sp = NULL;
+    state->paused_button.font = state->game_font;
+    state->paused_button.back_color = DARK_GRAY;
+    state->paused_button.hover_frame_color = CRIMSON_RED;
+    strcpy(state->paused_button.text, "PAUSED");
+
     if (state->player == NULL || state->map == NULL) {
         return 1; // error handling
     }
@@ -205,6 +216,10 @@ void game_handle_mouse(game_state_t* state, struct packet* mouse_packet) {
             }
         } else if (state->mode == STATE_PLAYING) {
             game_activate_power_up_at(state, state->mouse_x, state->mouse_y);
+        } else if (state->mode == STATE_PAUSED) {
+            if (button_is_hovered(&state->paused_button, state->mouse_x, state->mouse_y)) {
+                state->mode = STATE_PLAYING;
+            }
         }
     }
 }

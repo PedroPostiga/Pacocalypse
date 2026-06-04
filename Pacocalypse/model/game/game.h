@@ -33,6 +33,7 @@ typedef struct {
     font_t *game_font;
     button_t play_button;
     button_t quit_button;
+    button_t paused_button;
 } game_state_t;
 
 int game_init(game_state_t* state);
