@@ -1,5 +1,6 @@
 #include "menu.h"
 #include "../renderer/renderer.h"
+#include "../../config.h"
 #include <string.h>
 
 void menu_init(menu_state_t *menu, font_t *font) {
@@ -28,24 +29,8 @@ void menu_init(menu_state_t *menu, font_t *font) {
     strcpy(menu->quit_button.text, "QUIT");
 }
 
-void menu_handle_mouse(menu_state_t *menu, const input_state_t *input, game_state_t *game_state) {
-    if (!menu || !input || !game_state) return;
-
-    if (game_state->mode != STATE_MENU || !input->left_click) return;
-
-    if (button_is_hovered(&menu->play_button, input->mouse_x, input->mouse_y)) {
-        if (game_restart(game_state) == 0) {
-            game_state->mode = STATE_PLAYING;
-        } else {
-            game_state->mode = STATE_QUIT;
-        }
-    } else if (button_is_hovered(&menu->quit_button, input->mouse_x, input->mouse_y)) {
-        game_state->mode = STATE_QUIT;
-    }
-}
-
-void menu_draw(const menu_state_t *menu, const input_state_t *input, const game_sprites_t *sprites) {
-    if (!menu || !input || !sprites) return;
+void menu_draw(const menu_state_t *menu, int mouse_x, int mouse_y, const game_sprites_t *sprites) {
+    if (!menu || !sprites) return;
 
     if (sprites->menu_bg) {
         int bg_x = (SCREEN_WIDTH - sprites->menu_bg->width) / 2;
@@ -55,6 +40,6 @@ void menu_draw(const menu_state_t *menu, const input_state_t *input, const game_
         draw_sprite(sprites->menu_bg, bg_x, bg_y);
     }
 
-    renderer_draw_button(&menu->play_button, input->mouse_x, input->mouse_y);
-    renderer_draw_button(&menu->quit_button, input->mouse_x, input->mouse_y);
+    renderer_draw_button(&menu->play_button, mouse_x, mouse_y);
+    renderer_draw_button(&menu->quit_button, mouse_x, mouse_y);
 }

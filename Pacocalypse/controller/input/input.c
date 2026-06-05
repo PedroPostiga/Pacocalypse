@@ -1,5 +1,5 @@
-#include "../game/game.h"
 #include "input.h"
+#include "../../config.h"
 
 void input_init(input_state_t *input) {
     if (!input) return;

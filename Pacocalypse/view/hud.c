@@ -1,4 +1,5 @@
 #include "hud.h"
+#include "../config.h"
 #include <stdio.h>
 #include <string.h>
 

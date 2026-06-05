@@ -2,12 +2,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "renderer.h"
+#include "../../config.h"
 #include "../../../lab5/videocard.h"
 #include "../../model/game/game.h"
 #include "../../model/map/map.h"
-#include "../../model/input/input.h"
 #include "../hud.h"
 #include "../sprite.h"
 #include "../resources/resources.h"
@@ -15,6 +16,9 @@
 #include "../ui/pause.h"
 
 static vbe_mode_info_t vmi;
+
+#define CURSOR_HOTSPOT_X 8
+#define CURSOR_HOTSPOT_Y 6
 
 static uint8_t direction_to_ghost_frame(direction_t dir) {
     switch (dir) {
@@ -151,6 +155,20 @@ static void renderer_draw_mouse(int mouse_x, int mouse_y, sprite_t* cursor_sprit
     draw_sprite(cursor_sprite, draw_x, draw_y);
 }
 
+static void renderer_draw_menu_summary(const game_state_t *state, font_t *font) {
+    if (!state || !state->player || !font || !state->run_summary_available) return;
+
+    char text_buffer[64];
+    int y = SCREEN_HEIGHT - font->tile_size - 20;
+
+    sprintf(text_buffer, "TIME: %02u:%02u", state->run_alive_seconds / 60, state->run_alive_seconds % 60);
+    draw_string(font, text_buffer, 20, y);
+
+    sprintf(text_buffer, "SCORE: %u", state->player->score);
+    int text_width = (int)strlen(text_buffer) * font->tile_size;
+    draw_string(font, text_buffer, SCREEN_WIDTH - text_width - 20, y);
+}
+
 
 int renderer_init(void) {
     return vbe_get_mode_info(VIDEO_MODE, &vmi) != 0;
@@ -200,40 +218,41 @@ void renderer_update_animations(const game_state_t *state, const view_resources_
 
 void renderer_draw_game(const game_state_t* state,
                         const view_resources_t *resources,
-                        const input_state_t *input,
+                        int mouse_x,
+                        int mouse_y,
                         const menu_state_t *menu,
                         const pause_state_t *pause) {
-    if (!state || !resources || !resources->sprites || !input || !menu || !pause) return;
+    if (!state || !resources || !resources->sprites || !menu || !pause) return;
 
     vg_draw_rectangle(0, 0, vmi.XResolution, vmi.YResolution, 0x111111);
 
     switch (state->mode) {
         case STATE_MENU:
-            menu_draw(menu, input, resources->sprites);
+            menu_draw(menu, mouse_x, mouse_y, resources->sprites);
+            renderer_draw_menu_summary(state, resources->game_font);
             break;
         case STATE_PLAYING:
             renderer_draw_map(state->map, resources->sprites);
             renderer_draw_ghost(state->ghosts, resources->sprites);
             renderer_draw_player(state->player, resources->sprites);
-            hud_draw(state->player, resources->game_font, state->alive_seconds);
+            hud_draw(state->player, resources->game_font, state->run_alive_seconds);
             break;
         case STATE_PAUSED:
             renderer_draw_map(state->map, resources->sprites);
             renderer_draw_ghost(state->ghosts, resources->sprites);
             renderer_draw_player(state->player, resources->sprites);
-            hud_draw(state->player, resources->game_font, state->alive_seconds);
-            pause_draw(pause, input, resources->sprites);
+            hud_draw(state->player, resources->game_font, state->run_alive_seconds);
+            pause_draw(pause, mouse_x, mouse_y, resources->sprites);
             break;
         case STATE_GAME_OVER:
-            hud_draw(state->player, resources->game_font, state->alive_seconds);
-            draw_string(resources->game_font, "GAME OVER", SCREEN_WIDTH / 2 - 72, SCREEN_HEIGHT / 2 - 16);
-            draw_string(resources->game_font, "ESC MENU", SCREEN_WIDTH / 2 - 64, SCREEN_HEIGHT / 2 + 24);
+            menu_draw(menu, mouse_x, mouse_y, resources->sprites);
+            renderer_draw_menu_summary(state, resources->game_font);
             break;
         case STATE_QUIT:
             break;
     }
     
-    renderer_draw_mouse(input->mouse_x, input->mouse_y, resources->sprites->cursor);
+    renderer_draw_mouse(mouse_x, mouse_y, resources->sprites->cursor);
 
     vg_flip();
 }

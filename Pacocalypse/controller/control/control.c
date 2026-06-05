@@ -1,41 +1,67 @@
 #include "control.h"
 
+static void handle_menu_click(game_state_t *state, const input_state_t *input, const menu_state_t *menu) {
+    if (!state || !input || !menu || state->mode != STATE_MENU || !input->left_click)
+        return;
+
+    if (button_is_hovered(&menu->play_button, input->mouse_x, input->mouse_y)) {
+        if (game_restart(state) == 0) {
+            state->mode = STATE_PLAYING;
+        } else {
+            state->mode = STATE_QUIT;
+        }
+    } else if (button_is_hovered(&menu->quit_button, input->mouse_x, input->mouse_y)) {
+        state->mode = STATE_QUIT;
+    }
+}
+
+static void handle_pause_click(game_state_t *state, const input_state_t *input, const pause_state_t *pause) {
+    if (!state || !input || !pause || state->mode != STATE_PAUSED || !input->left_click)
+        return;
+
+    if (button_is_hovered(&pause->paused_button, input->mouse_x, input->mouse_y)) {
+        state->mode = STATE_PLAYING;
+    } else if (button_is_hovered(&pause->quit_button, input->mouse_x, input->mouse_y)) {
+        state->mode = STATE_MENU;
+    }
+}
+
 static void update_alive_time(game_state_t *state) {
     if (!state || state->mode != STATE_PLAYING)
         return;
 
-    if (state->alive_tick_counter < TICKRATE)
-        state->alive_tick_counter++;
+    if (state->run_tick_counter < TICKRATE)
+        state->run_tick_counter++;
 
-    if (state->rtc_timer_started && state->alive_tick_counter < TICKRATE)
+    if (state->run_timer_started && state->run_tick_counter < TICKRATE)
         return;
 
     rtc_time current_time;
     if (rtc_read_time(&current_time) != 0) {
-        if (state->alive_tick_counter >= TICKRATE) {
-            state->alive_seconds++;
-            state->alive_tick_counter = 0;
+        if (state->run_tick_counter >= TICKRATE) {
+            state->run_alive_seconds++;
+            state->run_tick_counter = 0;
         }
         return;
     }
 
     uint32_t current_seconds = rtc_time_to_seconds(&current_time);
 
-    if (!state->rtc_timer_started) {
-        state->rtc_start_seconds = current_seconds;
-        state->alive_seconds = 0;
-        state->alive_tick_counter = 0;
-        state->rtc_timer_started = true;
+    if (!state->run_timer_started) {
+        state->run_start_seconds = current_seconds;
+        state->run_alive_seconds = 0;
+        state->run_tick_counter = 0;
+        state->run_timer_started = true;
         return;
     }
 
-    if (current_seconds >= state->rtc_start_seconds) {
-        state->alive_seconds = current_seconds - state->rtc_start_seconds;
+    if (current_seconds >= state->run_start_seconds) {
+        state->run_alive_seconds = current_seconds - state->run_start_seconds;
     } else {
-        state->alive_seconds = (24 * 60 * 60 - state->rtc_start_seconds) + current_seconds;
+        state->run_alive_seconds = (24 * 60 * 60 - state->run_start_seconds) + current_seconds;
     }
 
-    state->alive_tick_counter = 0;
+    state->run_tick_counter = 0;
 }
 
 bool update_keyboard_state(game_state_t *state) {
@@ -100,13 +126,13 @@ bool update_mouse_state(game_state_t *state,
 
     switch (state->mode) {
         case STATE_PLAYING:
-            game_handle_mouse_click(state, input);
+            game_handle_power_up_click(state, input->mouse_x, input->mouse_y, input->left_click);
             break;
         case STATE_MENU:
-            menu_handle_mouse(menu, input, state);
+            handle_menu_click(state, input, menu);
             break;
         case STATE_PAUSED:
-            pause_handle_mouse(pause, input, state);
+            handle_pause_click(state, input, pause);
             break;
         default:
             break;
@@ -131,7 +157,7 @@ bool update_timer_state(game_state_t *state,
 
     update_alive_time(state);
     renderer_update_animations(state, resources);
-    renderer_draw_game(state, resources, input, menu, pause);
+    renderer_draw_game(state, resources, input->mouse_x, input->mouse_y, menu, pause);
 
     return state->mode == STATE_QUIT;
 }

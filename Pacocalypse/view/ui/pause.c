@@ -1,5 +1,6 @@
 #include "pause.h"
 #include "../renderer/renderer.h"
+#include "../../config.h"
 #include <string.h>
 
 void pause_init(pause_state_t *pause, font_t *font) {
@@ -28,24 +29,11 @@ void pause_init(pause_state_t *pause, font_t *font) {
     strcpy(pause->quit_button.text, "QUIT");
 }
 
-void pause_handle_mouse(pause_state_t *pause, const input_state_t *input, game_state_t *game_state) {
-    if (!pause || !input || !game_state) return;
-
-    if (game_state->mode != STATE_PAUSED || !input->left_click) return;
-
-    if (button_is_hovered(&pause->paused_button, input->mouse_x, input->mouse_y)) {
-        game_state->mode = STATE_PLAYING;
-    }
-    if (button_is_hovered(&pause->quit_button, input->mouse_x, input->mouse_y)) {
-        game_state->mode = STATE_MENU;
-    }
-}
-
-void pause_draw(const pause_state_t *pause, const input_state_t *input, const game_sprites_t *sprites) {
+void pause_draw(const pause_state_t *pause, int mouse_x, int mouse_y, const game_sprites_t *sprites) {
     (void) sprites;
 
-    if (!pause || !input) return;
+    if (!pause) return;
 
-    renderer_draw_button(&pause->paused_button, input->mouse_x, input->mouse_y);
-    renderer_draw_button(&pause->quit_button, input->mouse_x, input->mouse_y);
+    renderer_draw_button(&pause->paused_button, mouse_x, mouse_y);
+    renderer_draw_button(&pause->quit_button, mouse_x, mouse_y);
 }

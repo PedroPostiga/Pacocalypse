@@ -8,7 +8,8 @@ static void game_check_collectibles(game_state_t* state) {
     player_collect(state->player, state->map);
 
     if (map_all_pellets_collected(state->map)) {
-        state->mode = STATE_GAME_OVER;
+        state->run_summary_available = true;
+        state->mode = STATE_MENU;
     }
 }
 
@@ -24,6 +25,7 @@ static void game_check_ghost_collisions(game_state_t* state) {
             player_add_score(state->player, SCORE_GHOST_EAT);
         } else if (ghost->state == GHOST_ALIVE) {
             if (!player_die(state->player, state->map)) {
+                state->run_summary_available = true;
                 state->mode = STATE_MENU;
                 ghosts_reset_all(state->ghosts, state->num_ghosts);
                 return;
@@ -64,10 +66,11 @@ int game_init(game_state_t* state) {
     if (!state) return 1;
 
     state->mode = STATE_MENU;
-    state->alive_seconds = 0;
-    state->rtc_start_seconds = 0;
-    state->alive_tick_counter = 0;
-    state->rtc_timer_started = false;
+    state->run_alive_seconds = 0;
+    state->run_start_seconds = 0;
+    state->run_tick_counter = 0;
+    state->run_timer_started = false;
+    state->run_summary_available = false;
     state->player = NULL;
     state->map = NULL;
     state->num_ghosts = 0;
@@ -130,9 +133,9 @@ void game_cleanup(game_state_t* state) {
     state->num_ghosts = 0;
 }
 
-void game_handle_mouse_click(game_state_t* state, const input_state_t *input) {
-    if (!state || !input || state->mode != STATE_PLAYING || !input->left_click) return;
-    game_activate_power_up_at(state, input->mouse_x, input->mouse_y);
+void game_handle_power_up_click(game_state_t* state, int mouse_x, int mouse_y, bool left_click) {
+    if (!state || state->mode != STATE_PLAYING || !left_click) return;
+    game_activate_power_up_at(state, mouse_x, mouse_y);
 }
 
 int game_update(game_state_t* state) {

@@ -3,7 +3,6 @@
 
 #include "../../model/game/game.h"
 #include "../resources/resources.h"
-#include "../../model/input/input.h"
 #include "../ui/menu.h"
 #include "../ui/pause.h"
 
@@ -15,7 +14,8 @@ void renderer_update_animations(const game_state_t *state, const view_resources_
 
 void renderer_draw_game(const game_state_t* state,
                         const view_resources_t *resources,
-                        const input_state_t *input,
+                        int mouse_x,
+                        int mouse_y,
                         const menu_state_t *menu,
                         const pause_state_t *pause);
 

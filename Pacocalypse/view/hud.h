@@ -2,7 +2,6 @@
 #define _HUD_H_
 
 #include "../model/player/player.h"
-#include "model/map/map.h"
 #include "font.h"
 
 /**

@@ -6,8 +6,8 @@ PROG=proj
 .PATH: ${.CURDIR}/model/map
 .PATH: ${.CURDIR}/model/player
 .PATH: ${.CURDIR}/model/ghost
-.PATH: ${.CURDIR}/model/input
-.PATH: ${.CURDIR}/model/control
+.PATH: ${.CURDIR}/controller/input
+.PATH: ${.CURDIR}/controller/control
 .PATH: ${.CURDIR}/view/renderer
 .PATH: ${.CURDIR}/view/resources
 .PATH: ${.CURDIR}/view/ui

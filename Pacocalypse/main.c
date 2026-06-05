@@ -6,11 +6,10 @@
 #include "../lab3/kbc.h"
 #include "../lab4/mouse.h"
 #include "../lab5/videocard.h"
+#include "config.h"
 #include "model/game/game.h"
-#include "model/player/player.h"
-#include "model/ghost/ghost.h"
-#include "model/control/control.h"
-#include "model/input/input.h"
+#include "controller/control/control.h"
+#include "controller/input/input.h"
 #include "view/resources/resources.h"
 #include "view/renderer/renderer.h"
 #include "view/ui/menu.h"
@@ -103,7 +102,12 @@ int (proj_main_loop)(int argc, char *argv[]) {
     menu_init(&menu_state, view_resources.game_font);
     pause_init(&pause_state, view_resources.game_font);
 
-    renderer_draw_game(&game_state, &view_resources, &input_state, &menu_state, &pause_state); // initial render
+    renderer_draw_game(&game_state,
+                       &view_resources,
+                       input_state.mouse_x,
+                       input_state.mouse_y,
+                       &menu_state,
+                       &pause_state); // initial render
 
     message msg;
     int ipc_status;

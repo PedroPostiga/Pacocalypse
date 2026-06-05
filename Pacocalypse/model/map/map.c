@@ -8,7 +8,7 @@ static const char *default_map_layout[MAP_ROWS] = {
     "W.........W.........W",
     "W.WWW.WWW.W.WWW.WWWoW",
     "W.WWW.WWW.W.WWW.WWW.W",
-    "W...................W",
+    "W.........o.........W",
     "W.WWW.W...W...W.WWW.W",
     "W.WWW.WWW.W.WWW.WWW.W",
     "W...o.W...W...W.....W",

@@ -3,9 +3,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "../../config.h"
 
-#define SCREEN_WIDTH 1152
-#define SCREEN_HEIGHT 864
 #define MAP_ROWS 21
 #define MAP_COLS 21
 #define TILE_SIZE 32
