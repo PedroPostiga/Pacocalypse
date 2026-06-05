@@ -7,10 +7,23 @@
 #include "../../../lab5/videocard.h"
 #include "../../model/game/game.h"
 #include "../../model/map/map.h"
+#include "../../model/input/input.h"
 #include "../hud.h"
 #include "../sprite.h"
+#include "../resources/resources.h"
+#include "../ui/menu.h"
 
 static vbe_mode_info_t vmi;
+
+static uint8_t direction_to_ghost_frame(direction_t dir) {
+    switch (dir) {
+        case DIR_UP:    return 0;
+        case DIR_RIGHT: return 1;
+        case DIR_DOWN:  return 2;
+        case DIR_LEFT:  return 3;
+        default:        return 1;
+    }
+}
 
 static void renderer_draw_tile_sprite(const sprite_t* sprite, int x, int y) {
     if (!sprite) return;
@@ -113,34 +126,60 @@ void renderer_draw_button(const button_t *btn, int mouse_x, int mouse_y) {
     button_draw(btn, is_hovered);
 }
 
-void renderer_draw_game(const game_state_t* state) {
-    if (!state || !state->sprites) return;
+void renderer_update_animations(const game_state_t *state, const view_resources_t *resources) {
+    if (!state || !resources || !resources->sprites) return;
+
+    game_sprites_t *sp = resources->sprites;
+
+    if (sp->player_anim_up)    animated_sprite_update(sp->player_anim_up);
+    if (sp->player_anim_down)  animated_sprite_update(sp->player_anim_down);
+    if (sp->player_anim_left)  animated_sprite_update(sp->player_anim_left);
+    if (sp->player_anim_right) animated_sprite_update(sp->player_anim_right);
+
+    animated_sprite_t *ghost_sprites[GHOST_COUNT] = {
+        sp->ghost_red,
+        sp->ghost_pink,
+        sp->ghost_cyan,
+        sp->ghost_orange
+    };
+
+    for (int i = 0; i < state->num_ghosts; i++) {
+        ghost_t *ghost = state->ghosts[i];
+        if (!ghost) continue;
+
+        animated_sprite_t *anim = ghost_sprites[ghost->id];
+        if (anim) {
+            anim->current_pixmap = direction_to_ghost_frame(ghost->direction);
+        }
+    }
+
+    if (sp->frightened_ghost_anim) animated_sprite_update(sp->frightened_ghost_anim);
+    if (sp->ghost_eyes)            animated_sprite_update(sp->ghost_eyes);
+}
+
+void renderer_draw_game(const game_state_t* state,
+                        const view_resources_t *resources,
+                        const input_state_t *input,
+                        const menu_state_t *menu) {
+    if (!state || !resources || !resources->sprites || !input || !menu) return;
 
     vg_draw_rectangle(0, 0, vmi.XResolution, vmi.YResolution, 0x111111);
 
     switch (state->mode) {
         case STATE_MENU:
-            if (state->sprites->menu_bg) {
-                int bg_x = (vmi.XResolution - state->sprites->menu_bg->width) / 2;
-                int bg_y = (vmi.YResolution - state->sprites->menu_bg->height) / 2;
-                if (bg_x < 0) bg_x = 0;
-                if (bg_y < 0) bg_y = 0;
-                draw_sprite(state->sprites->menu_bg, bg_x, bg_y);
-            }
-            renderer_draw_button(&state->play_button, state->mouse_x, state->mouse_y);
-            renderer_draw_button(&state->quit_button, state->mouse_x, state->mouse_y);
+            menu_draw(menu, input, resources->sprites);
             break;
         case STATE_PLAYING:
-            renderer_draw_map(state->map, state->sprites);
-            renderer_draw_ghost(state->ghosts, state->sprites);
-            renderer_draw_player(state->player, state->sprites);
-            hud_draw(state->player, state->game_font);
+            renderer_draw_map(state->map, resources->sprites);
+            renderer_draw_ghost(state->ghosts, resources->sprites);
+            renderer_draw_player(state->player, resources->sprites);
+            hud_draw(state->player, resources->game_font);
             break;
         case STATE_PAUSED:
-            renderer_draw_map(state->map, state->sprites);
-            renderer_draw_ghost(state->ghosts, state->sprites);
-            renderer_draw_player(state->player, state->sprites);
-            hud_draw(state->player, state->game_font);
+            renderer_draw_map(state->map, resources->sprites);
+            renderer_draw_ghost(state->ghosts, resources->sprites);
+            renderer_draw_player(state->player, resources->sprites);
+            hud_draw(state->player, resources->game_font);
             vg_draw_rectangle(vmi.XResolution / 2 - 100,
                               vmi.YResolution / 2 - 30,
                               200, 60, 0x333333);
@@ -151,8 +190,7 @@ void renderer_draw_game(const game_state_t* state) {
             break;
     }
     
-    // Draw mouse cursor on top of everything
-    renderer_draw_mouse(state->mouse_x, state->mouse_y, state->sprites->cursor);
+    renderer_draw_mouse(input->mouse_x, input->mouse_y, resources->sprites->cursor);
 
     vg_flip();
 }

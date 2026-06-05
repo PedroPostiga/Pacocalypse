@@ -1,54 +1,58 @@
 #include "control.h"
 
-void update_keyboard_state(player_t *player) {
+void update_keyboard_state(game_state_t *state) {
+    if (!state) return;
+
     kbc_ih();
-    switch (kbc_get_scancode()) {
-        case W_KEY:
-            player->next_direction = DIR_UP;
+
+    if (!get_scancode_status())
+        return;
+
+    set_scancode_status(false);
+    uint8_t scancode = get_scancode();
+
+    switch (state->mode) {
+        case STATE_PLAYING:
+            switch (scancode) {
+                case W_MAKE: player_set_direction(state->player, DIR_UP); break;
+                case A_MAKE: player_set_direction(state->player, DIR_LEFT); break;
+                case S_MAKE: player_set_direction(state->player, DIR_DOWN); break;
+                case D_MAKE: player_set_direction(state->player, DIR_RIGHT); break;
+                case ESC_MAKE: state->mode = STATE_PAUSED; break;
+                default: break;
+            }
             break;
-        case A_KEY:
-            player->next_direction = DIR_LEFT;
-            break;
-        case S_KEY:
-            player->next_direction = DIR_DOWN;
-            break;
-        case D_KEY:
-            player->next_direction = DIR_RIGHT;
+        case STATE_PAUSED:
+            if (scancode == ESC_MAKE)
+                state->mode = STATE_PLAYING;
             break;
         default:
             break;
     }
 }
 
-void update_mouse_state(game_state_t *state) {
-    static struct packet pp;
+bool update_mouse_state(input_state_t *input) {
+    if (!input) return false;
+
     mouse_ih();
-    
-    if (mouse_parse_packet(mouse_get_byte(), &pp)) {
-        // Complete packet received
-        game_handle_mouse(state, &pp);
-    }
+
+    if (!mouse_get_byte_ready())
+        return false;
+
+    mouse_set_byte_ready(false);
+    uint8_t byte = mouse_get_byte();
+
+    struct packet pp;
+    if (!mouse_parse_packet(byte, &pp))
+        return false;
+
+    input_update(input, &pp);
+    return true;
 }
 
-void update_timer_state(game_state_t *state) {
+int update_timer_state(game_state_t *state) {
+    if (!state) return 1;
+
     timer_ih();
-    game_update(state);
-    renderer_draw_game(state);
-    vg_flip();  // Hardware buffer swap
-}
-
-void update_rtc_state() {
-    static int tick_count = 0;
-    
-    tick_count++;
-    
-    // Only update RTC every TICKRATE ticks (1 second at 60 Hz)
-    if (tick_count >= TICKRATE) {
-        rtc_date date;
-        if (rtc_read_date(&date) == 0) {
-            // RTC updated successfully
-            // TODO: Store date in game state if needed for display
-        }
-        tick_count = 0;
-    }
+    return game_update(state);
 }
