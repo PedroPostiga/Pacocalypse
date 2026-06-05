@@ -205,16 +205,19 @@ void renderer_draw_game(const game_state_t* state,
             renderer_draw_map(state->map, resources->sprites);
             renderer_draw_ghost(state->ghosts, resources->sprites);
             renderer_draw_player(state->player, resources->sprites);
-            hud_draw(state->player, resources->game_font);
+            hud_draw(state->player, resources->game_font, state->alive_seconds);
             break;
         case STATE_PAUSED:
             renderer_draw_map(state->map, resources->sprites);
             renderer_draw_ghost(state->ghosts, resources->sprites);
             renderer_draw_player(state->player, resources->sprites);
-            hud_draw(state->player, resources->game_font);
+            hud_draw(state->player, resources->game_font, state->alive_seconds);
             pause_draw(pause, input, resources->sprites);
             break;
         case STATE_GAME_OVER:
+            hud_draw(state->player, resources->game_font, state->alive_seconds);
+            draw_string(resources->game_font, "GAME OVER", SCREEN_WIDTH / 2 - 72, SCREEN_HEIGHT / 2 - 16);
+            draw_string(resources->game_font, "ESC MENU", SCREEN_WIDTH / 2 - 64, SCREEN_HEIGHT / 2 + 24);
             break;
         case STATE_QUIT:
             break;

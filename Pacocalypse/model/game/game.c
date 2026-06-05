@@ -24,7 +24,7 @@ static void game_check_ghost_collisions(game_state_t* state) {
             player_add_score(state->player, SCORE_GHOST_EAT);
         } else if (ghost->state == GHOST_ALIVE) {
             if (!player_die(state->player, state->map)) {
-                state->mode = STATE_GAME_OVER;
+                state->mode = STATE_MENU;
                 ghosts_reset_all(state->ghosts, state->num_ghosts);
                 return;
             }
@@ -56,6 +56,18 @@ int game_init(game_state_t* state) {
     if (!state) return 1;
 
     state->mode = STATE_MENU;
+    state->alive_seconds = 0;
+    state->rtc_start_seconds = 0;
+    state->alive_tick_counter = 0;
+    state->rtc_timer_started = false;
+    state->player = NULL;
+    state->map = NULL;
+    state->num_ghosts = 0;
+
+    for (int i = 0; i < GHOST_COUNT; i++) {
+        state->ghosts[i] = NULL;
+    }
+
     state->map = map_create();
     if (!state->map) {
         return 1;
@@ -64,6 +76,7 @@ int game_init(game_state_t* state) {
     state->player = player_create(state->map);
     if (!state->player) {
         map_destroy(state->map);
+        state->map = NULL;
         return 1;
     }
 
@@ -71,10 +84,19 @@ int game_init(game_state_t* state) {
     if (state->num_ghosts == 0) {
         player_destroy(state->player);
         map_destroy(state->map);
+        state->player = NULL;
+        state->map = NULL;
         return 1;
     }
 
     return 0;
+}
+
+int game_restart(game_state_t* state) {
+    if (!state) return 1;
+
+    game_cleanup(state);
+    return game_init(state);
 }
 
 void game_cleanup(game_state_t* state) {

@@ -1,5 +1,43 @@
 #include "control.h"
 
+static void update_alive_time(game_state_t *state) {
+    if (!state || state->mode != STATE_PLAYING)
+        return;
+
+    if (state->alive_tick_counter < TICKRATE)
+        state->alive_tick_counter++;
+
+    if (state->rtc_timer_started && state->alive_tick_counter < TICKRATE)
+        return;
+
+    rtc_time current_time;
+    if (rtc_read_time(&current_time) != 0) {
+        if (state->alive_tick_counter >= TICKRATE) {
+            state->alive_seconds++;
+            state->alive_tick_counter = 0;
+        }
+        return;
+    }
+
+    uint32_t current_seconds = rtc_time_to_seconds(&current_time);
+
+    if (!state->rtc_timer_started) {
+        state->rtc_start_seconds = current_seconds;
+        state->alive_seconds = 0;
+        state->alive_tick_counter = 0;
+        state->rtc_timer_started = true;
+        return;
+    }
+
+    if (current_seconds >= state->rtc_start_seconds) {
+        state->alive_seconds = current_seconds - state->rtc_start_seconds;
+    } else {
+        state->alive_seconds = (24 * 60 * 60 - state->rtc_start_seconds) + current_seconds;
+    }
+
+    state->alive_tick_counter = 0;
+}
+
 bool update_keyboard_state(game_state_t *state) {
     if (!state) return false;
 
@@ -27,6 +65,10 @@ bool update_keyboard_state(game_state_t *state) {
         case STATE_PAUSED:
             if (scancode == ESC_MAKE)
                 state->mode = STATE_PLAYING;
+            break;
+        case STATE_GAME_OVER:
+            if (scancode == ESC_MAKE)
+                state->mode = STATE_MENU;
             break;
         default:
             break;
@@ -87,6 +129,7 @@ bool update_timer_state(game_state_t *state,
         return true;
     }
 
+    update_alive_time(state);
     renderer_update_animations(state, resources);
     renderer_draw_game(state, resources, input, menu, pause);
 

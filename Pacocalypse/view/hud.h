@@ -11,6 +11,6 @@
  * @param player pointer to the player structure containing score and lives
  * @param font pointer to the font used for drawing
  */
-void hud_draw(const player_t *player, font_t *font);
+void hud_draw(const player_t *player, font_t *font, uint32_t alive_seconds);
 
 #endif // _HUD_H_

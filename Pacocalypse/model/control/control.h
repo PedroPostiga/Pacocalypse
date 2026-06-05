@@ -7,6 +7,7 @@
 #include "../../../lab2/timer.h"
 #include "../../../lab3/kbc.h"
 #include "../../../lab4/mouse.h"
+#include "../../../lab1/rtc.h"
 #include "../game/game.h"
 #include "../input/input.h"
 #include "../../view/renderer/renderer.h"

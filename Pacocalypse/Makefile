@@ -23,7 +23,7 @@ CFLAGS += -pedantic
 
 # list of library dependencies
 DPADD += ${LIBLCF}
-LDADD += -llcf -L/home/lcom/labs/lab5 -lvideocard -L/home/lcom/labs/lab4 -lmouse -L/home/lcom/labs/lab3 -lkbd -L/home/lcom/labs/lab2 -ltimer
+LDADD += -llcf -L/home/lcom/labs/lab5 -lvideocard -L/home/lcom/labs/lab4 -lmouse -L/home/lcom/labs/lab3 -lkbd -L/home/lcom/labs/lab2 -ltimer -L/home/lcom/labs/lab1 -lrtc
 
 
 # include LCOM's makefile that does all the "heavy lifting"

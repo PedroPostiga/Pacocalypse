@@ -34,7 +34,11 @@ void menu_handle_mouse(menu_state_t *menu, const input_state_t *input, game_stat
     if (game_state->mode != STATE_MENU || !input->left_click) return;
 
     if (button_is_hovered(&menu->play_button, input->mouse_x, input->mouse_y)) {
-        game_state->mode = STATE_PLAYING;
+        if (game_restart(game_state) == 0) {
+            game_state->mode = STATE_PLAYING;
+        } else {
+            game_state->mode = STATE_QUIT;
+        }
     } else if (button_is_hovered(&menu->quit_button, input->mouse_x, input->mouse_y)) {
         game_state->mode = STATE_QUIT;
     }

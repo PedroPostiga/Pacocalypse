@@ -11,7 +11,7 @@
 #define TILE_SIZE 32
 #define MAP_OFFSET_X (((SCREEN_WIDTH - (MAP_COLS * TILE_SIZE)) / 2)) // = 176
 #define MAP_OFFSET_Y (((SCREEN_HEIGHT - (MAP_ROWS * TILE_SIZE)) / 2)) // = 48
-#define TOTAL_PELLETS 240
+#define MAP_TUNNEL_ROW 11
 
 typedef enum {
     TILE_EMPTY,

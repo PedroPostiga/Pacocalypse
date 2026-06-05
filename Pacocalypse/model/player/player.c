@@ -36,6 +36,29 @@ static void direction_to_delta(direction_t dir, int *dx, int *dy) {
     }
 }
 
+static bool player_try_portal_wrap(player_t *player, direction_t dir) {
+    int row, col;
+    player_get_tile(player, &row, &col);
+
+    if (row != MAP_TUNNEL_ROW)
+        return false;
+
+    int left_x = MAP_OFFSET_X;
+    int right_x = MAP_OFFSET_X + (MAP_COLS - 1) * TILE_SIZE;
+
+    if (dir == DIR_LEFT && player->x <= left_x) {
+        player->x = right_x;
+        return true;
+    }
+
+    if (dir == DIR_RIGHT && player->x >= right_x) {
+        player->x = left_x;
+        return true;
+    }
+
+    return false;
+}
+
 // Returns true if the player at position (px, py) can move without entering a wall.
 // Checks all four corners of the player sprite (TILE_SIZE x TILE_SIZE bounding box).
 static bool can_move_to(const map_t *map, int px, int py) {
@@ -100,6 +123,12 @@ void player_move(player_t *player, map_t *map) {
 
     // Try the buffered (next) direction first
     if (player->next_direction != DIR_NONE) {
+        if (player_try_portal_wrap(player, player->next_direction)) {
+            player->direction      = player->next_direction;
+            player->next_direction = DIR_NONE;
+            return;
+        }
+
         direction_to_delta(player->next_direction, &dx, &dy);
         int nx = player->x + dx;
         int ny = player->y + dy;
@@ -115,6 +144,9 @@ void player_move(player_t *player, map_t *map) {
 
     // Fall back to current direction
     if (player->direction == DIR_NONE) return;
+
+    if (player_try_portal_wrap(player, player->direction))
+        return;
 
     direction_to_delta(player->direction, &dx, &dy);
     int nx = player->x + dx;

@@ -33,8 +33,6 @@ map_t *map_create() {
 
     memset(map, 0, sizeof(map_t)); // Initialize all fields to zero
 
-    map->pellets_remaining = TOTAL_PELLETS;
-
     for (int row = 0; row <MAP_ROWS; row++) {
         for(int col = 0; col <MAP_COLS; col++) {
             tile_t *tile = &map->tiles[row][col];
@@ -46,9 +44,11 @@ map_t *map_create() {
                     break;
                 case '.':
                     tile->type = TILE_PELLET;
+                    map->pellets_remaining++;
                     break;
                 case 'o':
                     tile->type = TILE_POWER_UP;
+                    map->pellets_remaining++;
                     break;
                 case 'P':
                     tile->type = TILE_PLAYER_SPAWN;
@@ -86,7 +86,7 @@ void map_collect_pellet(map_t *map, int row, int col) {
     tile_t *tile = &map->tiles[row][col];
     if ((tile->type == TILE_PELLET || tile->type == TILE_POWER_UP) && !tile->collected) {
         tile->collected = true;
-        if (tile->type == TILE_PELLET)
+        if (map->pellets_remaining > 0)
             map->pellets_remaining--;
     }
 }
