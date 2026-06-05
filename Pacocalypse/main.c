@@ -15,6 +15,13 @@
 #include "view/ui/menu.h"
 #include "view/ui/pause.h"
 
+/**
+ * @brief Program entry point used before handing execution to LCF.
+ *
+ * @param argc Argument count.
+ * @param argv Argument vector.
+ * @return 0 on success, non-zero on failure.
+ */
 int (main)(int argc, char *argv[]) {
   // sets the language of LCF messages (can be either EN-US or PT-PT)
   lcf_set_language("EN-US");
@@ -39,6 +46,14 @@ int (main)(int argc, char *argv[]) {
   return 0;
 }
 
+/**
+ * @brief Initializes hardware devices, video mode, interrupts, and renderer state.
+ *
+ * @param timer_bit_no Output timer interrupt bit number.
+ * @param kbd_bit_no Output keyboard interrupt bit number.
+ * @param mouse_bit_no Output mouse interrupt bit number.
+ * @return 0 on success, non-zero on failure.
+ */
 int setup(uint8_t *timer_bit_no, uint8_t *kbd_bit_no, uint8_t *mouse_bit_no) {
 
     if (timer_set_frequency(0, TICKRATE) != 0)
@@ -68,6 +83,15 @@ int setup(uint8_t *timer_bit_no, uint8_t *kbd_bit_no, uint8_t *mouse_bit_no) {
     return 0;
 }
 
+/**
+ * @brief Main project loop called by LCF.
+ *
+ * Receives hardware notifications and dispatches them to the controller layer.
+ *
+ * @param argc Argument count.
+ * @param argv Argument vector.
+ * @return 0 on success, non-zero on failure.
+ */
 int (proj_main_loop)(int argc, char *argv[]) {
 
     uint8_t timer_bit_no, kbd_bit_no, mouse_bit_no;

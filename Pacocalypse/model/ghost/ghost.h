@@ -10,67 +10,83 @@
 /*   GHOST CONSTANTS     */
 /* ===================== */
 
-#define GHOST_SPEED             2    // Pixels per tick
-#define GHOST_COUNT             4    // Number of ghosts in the game
-#define GHOST_ANIM_FRAMES       2    // Normal: 2 frames; frightened handled separately
-#define GHOST_ANIM_SPEED        8    // Ticks per animation frame
-#define GHOST_FRIGHTENED_TICKS  180  // Duration of frightened state (3s at 60 Hz)
-#define GHOST_DEAD_TICKS        90   // Ticks before rushing to respawn (1.5s at 60 Hz)
-#define GHOST_CHASE_MODE_TICKS  1200 // Main chase duration (20s at 60 Hz)
-#define GHOST_SCATTER_MODE_TICKS 420 // Initial scatter duration (7s at 60 Hz)
+/** @brief Ghost movement speed in pixels per tick. */
+#define GHOST_SPEED             2
+/** @brief Number of ghosts in the game. */
+#define GHOST_COUNT             4
+/** @brief Number of frames in each normal ghost animation. */
+#define GHOST_ANIM_FRAMES       2
+/** @brief Number of ticks between ghost animation frame changes. */
+#define GHOST_ANIM_SPEED        8
+/** @brief Duration of frightened ghost state in ticks. */
+#define GHOST_FRIGHTENED_TICKS  180
+/** @brief Delay in ticks before eaten ghosts begin returning to spawn. */
+#define GHOST_DEAD_TICKS        90
+/** @brief Default chase mode duration in ticks. */
+#define GHOST_CHASE_MODE_TICKS  1200
+/** @brief Default scatter mode duration in ticks. */
+#define GHOST_SCATTER_MODE_TICKS 420
 
 /* ===================== */
 /*   GHOST MODE          */
 /* ===================== */
 
-// Mode determines targeting behavior during chase state
+/**
+ * @brief Global AI mode used by living ghosts.
+ */
 typedef enum {
-    GHOST_MODE_CHASE,   // Target player directly (or prediction)
-    GHOST_MODE_SCATTER  // Target own corner (out of bounds)
+    GHOST_MODE_CHASE,  /**< Ghosts target the player using their personality logic. */
+    GHOST_MODE_SCATTER /**< Ghosts target their assigned corners. */
 } ghost_mode_t;
 
 /* ===================== */
 /*   GHOST STATE         */
 /* ===================== */
 
-// Behavioural state of a ghost. Keep historically-used enum names
-// (GHOST_FRIGHTENED, GHOST_DEAD, ...) for compatibility with callers.
+/**
+ * @brief Life-cycle state of a ghost.
+ */
 typedef enum {
-    GHOST_ALIVE, // Normal behaviour; use `mode` to choose targeting
-    GHOST_FRIGHTENED,        // Player has power-up active — ghost flees and can be eaten
-    GHOST_DEAD,              // Eaten — waiting to respawn at ghost spawn tile
-    GHOST_RESPAWNING         // Returning to spawn point at double speed
+    GHOST_ALIVE,      /**< Normal behavior; targeting depends on ghost_mode_t. */
+    GHOST_FRIGHTENED, /**< Ghost can be eaten by the player. */
+    GHOST_DEAD,       /**< Ghost was eaten and is waiting before respawn movement. */
+    GHOST_RESPAWNING  /**< Ghost eyes are returning to spawn. */
 } ghost_state_t;
 
 /* ===================== */
 /*   GHOST IDENTITY      */
 /* ===================== */
 
-// Colour identity — used by renderer to pick the right sprite sheet
+/**
+ * @brief Ghost identity used for sprite selection and targeting personality.
+ */
 typedef enum {
-    GHOST_RED   = 0,
-    GHOST_PINK  = 1,
-    GHOST_CYAN  = 2,
-    GHOST_ORANGE = 3
+    GHOST_RED    = 0, /**< Red ghost. */
+    GHOST_PINK   = 1, /**< Pink ghost. */
+    GHOST_CYAN   = 2, /**< Cyan/blue ghost. */
+    GHOST_ORANGE = 3  /**< Orange ghost. */
 } ghost_id_t;
 
 /* ===================== */
 /*   GHOST STRUCT        */
 /* ===================== */
 
+/**
+ * @brief Mutable state for one ghost.
+ */
 typedef struct {
-    int x;                          // Pixel x position (top-left of sprite)
-    int y;                          // Pixel y position (top-left of sprite)
-    direction_t direction;          // Current movement direction
-    ghost_state_t state;            // Current behavioural state
-    ghost_id_t id;                  // Identity (colour)
-    ghost_mode_t mode;              // Chase vs Scatter mode (only used during GHOST_CHASE state)
-    uint32_t state_ticks_remaining; // Countdown for FRIGHTENED or DEAD states
-    uint32_t mode_ticks_remaining;  // Countdown for mode switching
-    uint8_t anim_frame;             // Current animation frame index
-    uint8_t anim_tick_counter;      // Ticks since last frame change
-    int spawn_x;                    // Pixel x of this ghost's spawn point (for respawn)
-    int spawn_y;                    // Pixel y of this ghost's spawn point
+    int x;                          /**< Pixel x position of the sprite top-left corner. */
+    int y;                          /**< Pixel y position of the sprite top-left corner. */
+    direction_t direction;          /**< Current movement direction. */
+    ghost_state_t state;            /**< Current life-cycle state. */
+    ghost_id_t id;                  /**< Ghost identity/personality. */
+    ghost_mode_t mode;              /**< Current chase/scatter targeting mode. */
+    uint32_t state_ticks_remaining; /**< Countdown for temporary states. */
+    uint32_t mode_ticks_remaining;  /**< Countdown for chase/scatter switching. */
+    uint8_t anim_frame;             /**< Current animation frame index. */
+    uint8_t anim_tick_counter;      /**< Ticks since last animation frame change. */
+    int spawn_x;                    /**< Pixel x coordinate of this ghost's spawn tile. */
+    int spawn_y;                    /**< Pixel y coordinate of this ghost's spawn tile. */
 } ghost_t;
 
 /* ===================== */
@@ -78,32 +94,44 @@ typedef struct {
 /* ===================== */
 
 /**
- * Allocates and initialises a ghost at the given pixel position.
- * `id` sets the ghost's colour identity.
- * Returns NULL on failure.
+ * @brief Allocates and initializes one ghost.
+ *
+ * @param x Initial pixel x coordinate.
+ * @param y Initial pixel y coordinate.
+ * @param id Ghost identity/personality.
+ * @return Created ghost, or NULL on failure.
  */
 ghost_t *ghost_create(int x, int y, ghost_id_t id);
 
 /**
- * Frees all memory associated with the ghost.
+ * @brief Frees one ghost.
+ *
+ * @param ghost Ghost to destroy. NULL is ignored.
  */
 void ghost_destroy(ghost_t *ghost);
 
 /**
- * Allocates and initialises all GHOST_COUNT ghosts placed at the
- * TILE_GHOST_SPAWN tiles found in the map. Fills `ghosts[]`.
- * Returns the number of ghosts successfully created (≤ GHOST_COUNT).
+ * @brief Creates all ghosts from TILE_GHOST_SPAWN tiles in the map.
+ *
+ * @param map Map containing ghost spawn tiles.
+ * @param ghosts Output array filled with created ghosts.
+ * @return Number of ghosts successfully created.
  */
 int ghosts_create_all(const map_t *map, ghost_t *ghosts[GHOST_COUNT]);
 
 /**
- * Destroys and frees all ghosts in the array.
+ * @brief Destroys all ghosts in an array.
+ *
+ * @param ghosts Ghost array to clean up.
+ * @param count Number of entries to inspect.
  */
 void ghosts_destroy_all(ghost_t *ghosts[GHOST_COUNT], int count);
 
 /**
- * Resets all ghosts to their spawn positions and initial state (CHASE).
- * Called when the player loses a life, to reset the level without reloading the map. Does not free or reallocate memory.
+ * @brief Resets all ghosts to their spawn positions and initial mode.
+ *
+ * @param ghosts Ghost array to reset.
+ * @param count Number of entries to inspect.
  */
 void ghosts_reset_all(ghost_t *ghosts[GHOST_COUNT], int count);
 
@@ -112,20 +140,29 @@ void ghosts_reset_all(ghost_t *ghosts[GHOST_COUNT], int count);
 /* ===================== */
 
 /**
- * Advances the ghost by one tick: handles movement, state countdown,
- * and animation. Call once per ghost per timer interrupt.
+ * @brief Advances one ghost by one tick without player targeting context.
+ *
+ * @param ghost Ghost to update.
+ * @param map Map used for movement.
  */
 void ghost_tick(ghost_t *ghost, const map_t *map);
 
 /**
- * Advances all ghosts by one tick.
+ * @brief Advances all ghosts by one tick without player targeting context.
+ *
+ * @param ghosts Ghost array to update.
+ * @param count Number of entries to inspect.
+ * @param map Map used for movement.
  */
 void ghosts_tick_all(ghost_t *ghosts[GHOST_COUNT], int count, const map_t *map);
 
 /**
- * Advances all ghosts by one tick with full game context.
- * This version includes player targeting and AI decision-making.
- * Call this from game_update instead of ghosts_tick_all for proper ghost behavior.
+ * @brief Advances all ghosts by one tick with player targeting context.
+ *
+ * @param ghosts Ghost array to update.
+ * @param count Number of entries to inspect.
+ * @param map Map used for movement.
+ * @param player Player used by ghost AI targeting.
  */
 void ghosts_tick_all_with_context(ghost_t *ghosts[GHOST_COUNT], int count, const map_t *map, const player_t *player);
 
@@ -134,19 +171,24 @@ void ghosts_tick_all_with_context(ghost_t *ghosts[GHOST_COUNT], int count, const
 /* ===================== */
 
 /**
- * Switches the ghost to GHOST_FRIGHTENED state and resets its countdown.
- * Called when the player collects a power-up.
+ * @brief Switches a ghost to frightened state.
+ *
+ * @param ghost Ghost to frighten.
  */
 void ghost_frighten(ghost_t *ghost);
 
 /**
- * Frightens all ghosts at once.
+ * @brief Switches all ghosts to frightened state.
+ *
+ * @param ghosts Ghost array to mutate.
+ * @param count Number of entries to inspect.
  */
 void ghosts_frighten_all(ghost_t *ghosts[GHOST_COUNT], int count);
 
 /**
- * Marks the ghost as eaten (GHOST_DEAD). Resets countdown for respawn.
- * Called by the game when the player touches a frightened ghost.
+ * @brief Marks a frightened ghost as eaten and starts its respawn flow.
+ *
+ * @param ghost Ghost to eat.
  */
 void ghost_eat(ghost_t *ghost);
 
@@ -155,28 +197,37 @@ void ghost_eat(ghost_t *ghost);
 /* ===================== */
 
 /**
- * Returns true if this ghost's bounding box overlaps the player's.
- * Caller should check ghost->state to decide the outcome
- * (CHASE → player dies; FRIGHTENED → ghost eaten).
+ * @brief Checks whether a ghost and player occupy the same center tile.
+ *
+ * @param ghost Ghost to test.
+ * @param player Player to test.
+ * @return true if they should interact, false otherwise.
  */
 bool ghost_collides_with_player(const ghost_t *ghost, const player_t *player);
 
 /**
- * Updates the mode for all ghosts based on mode countdown timer.
- * Call this once per tick from game_update to manage chase/scatter transitions.
- * Returns the current mode (useful for display/debugging).
+ * @brief Updates global ghost chase/scatter mode timing.
+ *
+ * @param ghosts Ghost array to mutate.
+ * @param count Number of entries to inspect.
+ * @return Current shared ghost mode.
  */
 ghost_mode_t ghosts_update_mode(ghost_t *ghosts[GHOST_COUNT], int count);
 
 /**
- * Sets all ghosts to a specific mode immediately.
- * Resets the mode timer to the appropriate duration.
+ * @brief Sets all ghosts to a specific mode immediately.
+ *
+ * @param ghosts Ghost array to mutate.
+ * @param count Number of entries to inspect.
+ * @param mode Mode to apply.
  */
 void ghosts_set_mode(ghost_t *ghosts[GHOST_COUNT], int count, ghost_mode_t mode);
 
 /**
- * Resets all ghosts' mode to initial state (GHOST_MODE_SCATTER with full timer).
- * Called when game restarts.
+ * @brief Resets all ghosts to the initial mode schedule.
+ *
+ * @param ghosts Ghost array to mutate.
+ * @param count Number of entries to inspect.
  */
 void ghosts_reset_mode(ghost_t *ghosts[GHOST_COUNT], int count);
 

@@ -1,0 +1,13 @@
+var searchData=
+[
+  ['main_0',['main',['../main_8c.html#a0ddf1224851353fc92bfbff6f499fa97',1,'main.c']]],
+  ['map_5fall_5fpellets_5fcollected_1',['map_all_pellets_collected',['../map_8c.html#a42f8b60644c02269c111f4ad7e41aa41',1,'map_all_pellets_collected(const map_t *map):&#160;map.c'],['../map_8h.html#a42f8b60644c02269c111f4ad7e41aa41',1,'map_all_pellets_collected(const map_t *map):&#160;map.c']]],
+  ['map_5fcollect_5fpellet_2',['map_collect_pellet',['../map_8c.html#a7858b645cbdac0560120899b22591a5b',1,'map_collect_pellet(map_t *map, int row, int col):&#160;map.c'],['../map_8h.html#a7858b645cbdac0560120899b22591a5b',1,'map_collect_pellet(map_t *map, int row, int col):&#160;map.c']]],
+  ['map_5fcreate_3',['map_create',['../map_8c.html#a032605da75527842de353e0dc0663adb',1,'map_create():&#160;map.c'],['../map_8h.html#a032605da75527842de353e0dc0663adb',1,'map_create():&#160;map.c']]],
+  ['map_5fdestroy_4',['map_destroy',['../map_8c.html#af5ffcd18e2143f36691d108296f0c93b',1,'map_destroy(map_t *map):&#160;map.c'],['../map_8h.html#af5ffcd18e2143f36691d108296f0c93b',1,'map_destroy(map_t *map):&#160;map.c']]],
+  ['map_5fget_5ftile_5',['map_get_tile',['../map_8c.html#a700187ad3fe119afb1286a6d68142b8e',1,'map_get_tile(const map_t *map, int row, int col):&#160;map.c'],['../map_8h.html#a700187ad3fe119afb1286a6d68142b8e',1,'map_get_tile(const map_t *map, int row, int col):&#160;map.c']]],
+  ['map_5fis_5fwalkable_6',['map_is_walkable',['../map_8c.html#a96733665dc79fe4e6260813f12ecebfd',1,'map_is_walkable(const map_t *map, int row, int col):&#160;map.c'],['../map_8h.html#a96733665dc79fe4e6260813f12ecebfd',1,'map_is_walkable(const map_t *map, int row, int col):&#160;map.c']]],
+  ['map_5ftile_5ffrom_5fpixel_7',['map_tile_from_pixel',['../map_8c.html#ad1497f28da70dda908b2e7243285b4e5',1,'map_tile_from_pixel(int x, int y, int *row, int *col):&#160;map.c'],['../map_8h.html#ad1497f28da70dda908b2e7243285b4e5',1,'map_tile_from_pixel(int x, int y, int *row, int *col):&#160;map.c']]],
+  ['menu_5fdraw_8',['menu_draw',['../menu_8c.html#a852452b49793520e51afacd9cbc78d41',1,'menu_draw(const menu_state_t *menu, int mouse_x, int mouse_y, const game_sprites_t *sprites):&#160;menu.c'],['../menu_8h.html#a852452b49793520e51afacd9cbc78d41',1,'menu_draw(const menu_state_t *menu, int mouse_x, int mouse_y, const game_sprites_t *sprites):&#160;menu.c']]],
+  ['menu_5finit_9',['menu_init',['../menu_8c.html#a5275d859d66f418b134c14c726c682aa',1,'menu_init(menu_state_t *menu, font_t *font):&#160;menu.c'],['../menu_8h.html#a5275d859d66f418b134c14c726c682aa',1,'menu_init(menu_state_t *menu, font_t *font):&#160;menu.c']]]
+];

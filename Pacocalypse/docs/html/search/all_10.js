@@ -1,0 +1,22 @@
+var searchData=
+[
+  ['text_0',['text',['../structbutton__t.html#a8cd72645efab635418fcdacdfcced561',1,'button_t']]],
+  ['tick_5fcount_1',['tick_count',['../structanimated__sprite__t.html#ac6a0a39092789027d201a4fc488d54e2',1,'animated_sprite_t']]],
+  ['tickrate_2',['TICKRATE',['../config_8h.html#a7f21fe9fdb3605017d51d802b41910ac',1,'config.h']]],
+  ['ticks_3',['ticks',['../structghost__mode__phase__t.html#afd00ee785d5670b5073a125e6202d078',1,'ghost_mode_phase_t']]],
+  ['ticks_5fper_5fframe_4',['ticks_per_frame',['../structanimated__sprite__t.html#a083aece7de0eb203f37df824cfe94c99',1,'animated_sprite_t']]],
+  ['ticks_5fper_5fupdate_5',['TICKS_PER_UPDATE',['../config_8h.html#a1a98dc976c5f2083d483ebff89b1385c',1,'config.h']]],
+  ['tile_5fempty_6',['TILE_EMPTY',['../map_8h.html#a871ca134e4b23f401adb02a0840ca8bdae3f31e3d7429c6198ac6344a2d41e8c8',1,'map.h']]],
+  ['tile_5fghost_5fspawn_7',['TILE_GHOST_SPAWN',['../map_8h.html#a871ca134e4b23f401adb02a0840ca8bdae01a7926d226e5921c0c88f9c6447e41',1,'map.h']]],
+  ['tile_5fpellet_8',['TILE_PELLET',['../map_8h.html#a871ca134e4b23f401adb02a0840ca8bdaf8d6a577e162e4ff0070637e941017a3',1,'map.h']]],
+  ['tile_5fplayer_5fspawn_9',['TILE_PLAYER_SPAWN',['../map_8h.html#a871ca134e4b23f401adb02a0840ca8bda642bba0ca84f3af1d350369f890c35e1',1,'map.h']]],
+  ['tile_5fpower_5fup_10',['TILE_POWER_UP',['../map_8h.html#a871ca134e4b23f401adb02a0840ca8bdaf7d6b714626c9555c2f50c97f4be3496',1,'map.h']]],
+  ['tile_5fsize_11',['TILE_SIZE',['../map_8h.html#a62ecd70800687eb2d625af180c4210d7',1,'map.h']]],
+  ['tile_5fsize_12',['tile_size',['../structfont__t.html#a41b7cca014804053c66f20ac73d58f4e',1,'font_t']]],
+  ['tile_5ft_13',['tile_t',['../structtile__t.html',1,'']]],
+  ['tile_5ftype_5ft_14',['tile_type_t',['../map_8h.html#a871ca134e4b23f401adb02a0840ca8bd',1,'map.h']]],
+  ['tile_5fwall_15',['TILE_WALL',['../map_8h.html#a871ca134e4b23f401adb02a0840ca8bdafc3e42901752d92e55d61c1a5caec31b',1,'map.h']]],
+  ['tiles_16',['tiles',['../structmap__t.html#af5466bf540fe56fe2061b2b7367b27b4',1,'map_t::tiles'],['../structfont__t.html#af56d5aeb923a5c786b511c85eca90feb',1,'font_t::tiles']]],
+  ['tiles_5fper_5frow_17',['tiles_per_row',['../structfont__t.html#a8d4b6e329555dc6235422d356429b61e',1,'font_t']]],
+  ['type_18',['type',['../structtile__t.html#a209f5b38835a88246b30691bc45705e7',1,'tile_t']]]
+];
