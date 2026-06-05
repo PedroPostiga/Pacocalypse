@@ -26,5 +26,11 @@ void hud_draw(const player_t *player, font_t *font, uint32_t alive_seconds) {
     draw_string(font, text_buffer, right_x, 20);
 
     sprintf(text_buffer, "TIME: %02u:%02u", alive_seconds / 60, alive_seconds % 60);
-    draw_string(font, text_buffer, 20, 50);
+    draw_string(font, text_buffer, 20, SCREEN_HEIGHT - font->tile_size - 20);
+
+    sprintf(text_buffer, "POWER: %u", player->power_ups_available);
+    text_length = strlen(text_buffer);
+    text_width = text_length * font->tile_size;
+    right_x = SCREEN_WIDTH - text_width - 20;
+    draw_string(font, text_buffer, right_x, SCREEN_HEIGHT - font->tile_size - 20);
 }

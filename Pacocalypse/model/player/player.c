@@ -79,6 +79,28 @@ static bool can_move_to(const map_t *map, int px, int py) {
     return true;
 }
 
+static bool player_is_fully_in_single_tile(const player_t *player) {
+    int corners[4][2] = {
+        { player->x + 1,             player->y + 1             },
+        { player->x + TILE_SIZE - 2, player->y + 1             },
+        { player->x + 1,             player->y + TILE_SIZE - 2 },
+        { player->x + TILE_SIZE - 2, player->y + TILE_SIZE - 2 },
+    };
+
+    int first_col = (corners[0][0] - MAP_OFFSET_X) / TILE_SIZE;
+    int first_row = (corners[0][1] - MAP_OFFSET_Y) / TILE_SIZE;
+
+    for (int i = 1; i < 4; i++) {
+        int col = (corners[i][0] - MAP_OFFSET_X) / TILE_SIZE;
+        int row = (corners[i][1] - MAP_OFFSET_Y) / TILE_SIZE;
+
+        if (col != first_col || row != first_row)
+            return false;
+    }
+
+    return true;
+}
+
 /* ===================== */
 /*   LIFECYCLE           */
 /* ===================== */
@@ -100,6 +122,7 @@ player_t *player_create(const map_t *map) {
     player->lives                   = PLAYER_LIVES;
     player->score                   = 0;
     player->powered_up              = false;
+    player->power_ups_available     = 0;
     player->power_up_ticks_remaining = 0;
     player->anim_frame              = 0;
     player->anim_tick_counter       = 0;
@@ -121,8 +144,8 @@ void player_move(player_t *player, map_t *map) {
 
     int dx, dy;
 
-    // Try the buffered (next) direction first
-    if (player->next_direction != DIR_NONE) {
+    // Try the buffered direction only at clean tile positions.
+    if (player->next_direction != DIR_NONE && player_is_fully_in_single_tile(player)) {
         if (player_try_portal_wrap(player, player->next_direction)) {
             player->direction      = player->next_direction;
             player->next_direction = DIR_NONE;
@@ -170,13 +193,9 @@ void player_tick_animation(player_t *player) {
 }
 
 void player_tick_power_up(player_t *player) {
-    if (!player->powered_up) return;
+    if (!player) return;
 
-    if (player->power_up_ticks_remaining > 0)
-        player->power_up_ticks_remaining--;
-
-    if (player->power_up_ticks_remaining == 0)
-        player->powered_up = false;
+    player->powered_up = player->power_ups_available > 0;
 }
 
 /* ===================== */
@@ -217,8 +236,24 @@ tile_type_t player_collect(player_t *player, map_t *map) {
 }
 
 void player_activate_power_up(player_t *player) {
-    player->powered_up               = true;
-    player->power_up_ticks_remaining = PLAYER_POWER_UP_DURATION;
+    if (!player) return;
+
+    if (player->power_ups_available < UINT8_MAX)
+        player->power_ups_available++;
+
+    player->powered_up = true;
+    player->power_up_ticks_remaining = 0;
+}
+
+bool player_use_power_up(player_t *player) {
+    if (!player || player->power_ups_available == 0)
+        return false;
+
+    player->power_ups_available--;
+    player->powered_up = player->power_ups_available > 0;
+    player->power_up_ticks_remaining = 0;
+
+    return true;
 }
 
 bool player_die(player_t *player, const map_t *map) {
@@ -238,6 +273,7 @@ bool player_die(player_t *player, const map_t *map) {
     player->direction               = DIR_NONE;
     player->next_direction          = DIR_NONE;
     player->powered_up              = false;
+    player->power_ups_available     = 0;
     player->power_up_ticks_remaining = 0;
     player->anim_frame              = 0;
     player->anim_tick_counter       = 0;

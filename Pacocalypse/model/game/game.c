@@ -28,6 +28,9 @@ static void game_check_ghost_collisions(game_state_t* state) {
                 ghosts_reset_all(state->ghosts, state->num_ghosts);
                 return;
             }
+
+            ghosts_reset_all(state->ghosts, state->num_ghosts);
+            return;
         }
     }
 }
@@ -36,6 +39,7 @@ static void game_activate_power_up_at(game_state_t* state, int mouse_x, int mous
     if (!state || !state->player || !state->player->powered_up) return;
 
     int radius_squared = POWER_UP_CLICK_RADIUS * POWER_UP_CLICK_RADIUS;
+    bool hit_ghost = false;
 
     for (int i = 0; i < state->num_ghosts; i++) {
         ghost_t *ghost = state->ghosts[i];
@@ -48,8 +52,12 @@ static void game_activate_power_up_at(game_state_t* state, int mouse_x, int mous
 
         if (dx * dx + dy * dy <= radius_squared) {
             ghost_frighten(ghost);
+            hit_ghost = true;
         }
     }
+
+    if (hit_ghost)
+        player_use_power_up(state->player);
 }
 
 int game_init(game_state_t* state) {

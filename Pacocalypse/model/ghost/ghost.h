@@ -10,14 +10,14 @@
 /*   GHOST CONSTANTS     */
 /* ===================== */
 
-#define GHOST_SPEED             3    // Pixels per tick (faster than player's 2)
+#define GHOST_SPEED             2    // Pixels per tick
 #define GHOST_COUNT             4    // Number of ghosts in the game
 #define GHOST_ANIM_FRAMES       2    // Normal: 2 frames; frightened handled separately
 #define GHOST_ANIM_SPEED        8    // Ticks per animation frame
 #define GHOST_FRIGHTENED_TICKS  180  // Duration of frightened state (3s at 60 Hz)
 #define GHOST_DEAD_TICKS        90   // Ticks before rushing to respawn (1.5s at 60 Hz)
-#define GHOST_CHASE_MODE_TICKS  300  // Duration of chase mode before scatter (5s at 60 Hz)
-#define GHOST_SCATTER_MODE_TICKS 1200 // Duration of scatter mode before chase (20s at 60 Hz)
+#define GHOST_CHASE_MODE_TICKS  1200 // Main chase duration (20s at 60 Hz)
+#define GHOST_SCATTER_MODE_TICKS 420 // Initial scatter duration (7s at 60 Hz)
 
 /* ===================== */
 /*   GHOST MODE          */

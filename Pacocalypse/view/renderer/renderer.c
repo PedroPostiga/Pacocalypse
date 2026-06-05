@@ -138,7 +138,17 @@ static void renderer_draw_ghost(ghost_t* const ghosts[GHOST_COUNT], const game_s
 
 static void renderer_draw_mouse(int mouse_x, int mouse_y, sprite_t* cursor_sprite) {
     // Draw cursor using pre-rendered XPM for better performance
-    draw_sprite(cursor_sprite, mouse_x, mouse_y);
+    if (!cursor_sprite) return;
+
+    int draw_x = mouse_x - CURSOR_HOTSPOT_X;
+    int draw_y = mouse_y - CURSOR_HOTSPOT_Y;
+
+    if (draw_x < 0) draw_x = 0;
+    if (draw_y < 0) draw_y = 0;
+    if (draw_x > SCREEN_WIDTH - cursor_sprite->width) draw_x = SCREEN_WIDTH - cursor_sprite->width;
+    if (draw_y > SCREEN_HEIGHT - cursor_sprite->height) draw_y = SCREEN_HEIGHT - cursor_sprite->height;
+
+    draw_sprite(cursor_sprite, draw_x, draw_y);
 }
 
 

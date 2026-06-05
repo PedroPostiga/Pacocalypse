@@ -11,7 +11,6 @@
 
 #define PLAYER_LIVES        3
 #define PLAYER_SPEED        2           // Pixels per tick
-#define PLAYER_POWER_UP_DURATION 180    // Ticks (3 seconds at 60 Hz)
 #define PLAYER_ANIM_FRAMES  3           // Number of animation frames
 #define PLAYER_ANIM_SPEED   8           // Ticks per animation frame
 
@@ -38,8 +37,9 @@ typedef struct {
     direction_t next_direction;     // Queued direction (buffered from keyboard)
     uint8_t lives;                  // Remaining lives
     uint32_t score;                 // Current score
-    bool powered_up;                // Whether the power-up is active
-    uint32_t power_up_ticks_remaining; // Countdown in ticks
+    bool powered_up;                // Whether the player has a usable power-up
+    uint8_t power_ups_available;    // Stored power-ups that can still be used
+    uint32_t power_up_ticks_remaining; // Kept for compatibility with older callers
     uint8_t anim_frame;             // Current animation frame index
     uint8_t anim_tick_counter;      // Ticks since last frame change
     bool alive;                     // Whether player is alive this life
@@ -76,8 +76,7 @@ void player_move(player_t *player, map_t *map);
 void player_tick_animation(player_t *player);
 
 /**
- * Decrements the power-up timer by one tick.
- * Deactivates the power-up when the counter reaches zero.
+ * Updates the cached powered_up flag from the stored power-up count.
  */
 void player_tick_power_up(player_t *player);
 
@@ -103,10 +102,15 @@ void player_set_direction(player_t *player, direction_t dir);
 tile_type_t player_collect(player_t *player, map_t *map);
 
 /**
- * Activates the power-up, setting powered_up = true and resetting the
- * countdown to PLAYER_POWER_UP_DURATION.
+ * Stores one newly collected power-up.
  */
 void player_activate_power_up(player_t *player);
+
+/**
+ * Consumes one stored power-up if available.
+ * Returns true if a power-up was consumed.
+ */
+bool player_use_power_up(player_t *player);
 
 /**
  * Handles player death: decrements lives, resets position to spawn,

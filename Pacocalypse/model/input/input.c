@@ -28,9 +28,9 @@ void input_update(input_state_t *input, const struct packet *mouse_packet) {
     int new_y = input->mouse_y - dy;
 
     if (new_x < 0) new_x = 0;
-    if (new_x > SCREEN_WIDTH - CURSOR_SIZE) new_x = SCREEN_WIDTH - CURSOR_SIZE;
+    if (new_x > SCREEN_WIDTH - 1) new_x = SCREEN_WIDTH - 1;
     if (new_y < 0) new_y = 0;
-    if (new_y > SCREEN_HEIGHT - CURSOR_SIZE) new_y = SCREEN_HEIGHT - CURSOR_SIZE;
+    if (new_y > SCREEN_HEIGHT - 1) new_y = SCREEN_HEIGHT - 1;
 
     input->mouse_x = new_x;
     input->mouse_y = new_y;

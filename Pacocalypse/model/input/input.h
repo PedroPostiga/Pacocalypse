@@ -14,6 +14,9 @@ typedef struct {
     bool left_click;
 } input_state_t;
 
+#define CURSOR_HOTSPOT_X 8
+#define CURSOR_HOTSPOT_Y 6
+
 void input_init(input_state_t *input);
 void input_update(input_state_t *input, const struct packet *mouse_packet);
 void input_reset_clicks(input_state_t *input);
