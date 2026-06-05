@@ -12,6 +12,7 @@
 #include "../sprite.h"
 #include "../resources/resources.h"
 #include "../ui/menu.h"
+#include "../ui/pause.h"
 
 static vbe_mode_info_t vmi;
 
@@ -160,8 +161,9 @@ void renderer_update_animations(const game_state_t *state, const view_resources_
 void renderer_draw_game(const game_state_t* state,
                         const view_resources_t *resources,
                         const input_state_t *input,
-                        const menu_state_t *menu) {
-    if (!state || !resources || !resources->sprites || !input || !menu) return;
+                        const menu_state_t *menu,
+                        const pause_state_t *pause) {
+    if (!state || !resources || !resources->sprites || !input || !menu || !pause) return;
 
     vg_draw_rectangle(0, 0, vmi.XResolution, vmi.YResolution, 0x111111);
 
@@ -180,9 +182,7 @@ void renderer_draw_game(const game_state_t* state,
             renderer_draw_ghost(state->ghosts, resources->sprites);
             renderer_draw_player(state->player, resources->sprites);
             hud_draw(state->player, resources->game_font);
-            vg_draw_rectangle(vmi.XResolution / 2 - 100,
-                              vmi.YResolution / 2 - 30,
-                              200, 60, 0x333333);
+            pause_draw(pause, input, resources->sprites);
             break;
         case STATE_GAME_OVER:
             break;

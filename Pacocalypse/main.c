@@ -14,6 +14,7 @@
 #include "view/resources/resources.h"
 #include "view/renderer/renderer.h"
 #include "view/ui/menu.h"
+#include "view/ui/pause.h"
 
 int (main)(int argc, char *argv[]) {
   // sets the language of LCF messages (can be either EN-US or PT-PT)
@@ -77,6 +78,7 @@ int (proj_main_loop)(int argc, char *argv[]) {
     game_state_t game_state;
     input_state_t input_state;
     menu_state_t menu_state;
+    pause_state_t pause_state;
     view_resources_t view_resources;
 
     if (game_init(&game_state) != 0) {
@@ -95,8 +97,9 @@ int (proj_main_loop)(int argc, char *argv[]) {
     }
 
     menu_init(&menu_state, view_resources.game_font);
+    pause_init(&pause_state, view_resources.game_font);
 
-    renderer_draw_game(&game_state, &view_resources, &input_state, &menu_state); // initial render
+    renderer_draw_game(&game_state, &view_resources, &input_state, &menu_state, &pause_state); // initial render
 
     message msg;
     int ipc_status;
@@ -121,6 +124,7 @@ int (proj_main_loop)(int argc, char *argv[]) {
                                 game_handle_mouse_click(&game_state, &input_state);
                             }
                             menu_handle_mouse(&menu_state, &input_state, &game_state);
+                            pause_handle_mouse(&pause_state, &input_state, &game_state);
                             input_reset_clicks(&input_state);
                         }
                     }
@@ -130,7 +134,7 @@ int (proj_main_loop)(int argc, char *argv[]) {
                             done = true;
                         }
                         renderer_update_animations(&game_state, &view_resources);
-                        renderer_draw_game(&game_state, &view_resources, &input_state, &menu_state);
+                        renderer_draw_game(&game_state, &view_resources, &input_state, &menu_state, &pause_state);
                         if (game_state.mode == STATE_QUIT) {
                             done = true;
                         }

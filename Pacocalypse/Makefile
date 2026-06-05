@@ -14,7 +14,7 @@ PROG=proj
 .PATH: ${.CURDIR}/view/
 
 # source code files to be compiled
-SRCS = main.c game.c map.c player.c ghost.c control.c renderer.c sprite.c font.c button.c hud.c input.c menu.c resources.c
+SRCS = main.c game.c map.c player.c ghost.c control.c renderer.c sprite.c font.c button.c hud.c input.c menu.c pause.c resources.c
 
 # additional compilation flags
 # "-Wall -Wextra -Werror -I . -std=c11 -Wno-unused-parameter" are already set
