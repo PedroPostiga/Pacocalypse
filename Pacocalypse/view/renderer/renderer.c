@@ -39,6 +39,8 @@ static void renderer_draw_tile_sprite(const sprite_t* sprite, int x, int y) {
 }
 
 static void renderer_draw_map(const map_t* map, const game_sprites_t *sprites) {
+    draw_sprite(sprites->map, MAP_OFFSET_X, MAP_OFFSET_Y);
+
     for (int row = 0; row < MAP_ROWS; row++) {
         for (int col = 0; col < MAP_COLS; col++) {
             tile_t tile = map->tiles[row][col];
@@ -46,9 +48,9 @@ static void renderer_draw_map(const map_t* map, const game_sprites_t *sprites) {
             int y = MAP_OFFSET_Y + row * TILE_SIZE;
 
             switch (tile.type) {
-                case TILE_WALL:
-                    vg_draw_rectangle(x, y, TILE_SIZE, TILE_SIZE, 0x1A1AFF);
-                    break;
+                //case TILE_WALL:
+                    //vg_draw_rectangle(x, y, TILE_SIZE, TILE_SIZE, 0x1A1AFF);
+                    //break;
                 case TILE_PELLET:
                     if (!tile.collected) {
                         renderer_draw_tile_sprite(sprites->pebble, x, y);
