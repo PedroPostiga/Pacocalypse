@@ -785,11 +785,13 @@ bool ghost_collides_with_player(const ghost_t *ghost, const player_t *player) {
     // Dead ghosts cannot interact with the player
     if (ghost->state == GHOST_DEAD) return false;
 
-    // AABB overlap ??? same bounding box size (TILE_SIZE) for both entities
-    return ghost->x < player->x + TILE_SIZE &&
-           ghost->x + TILE_SIZE > player->x &&
-           ghost->y < player->y + TILE_SIZE &&
-           ghost->y + TILE_SIZE > player->y;
+    int ghost_row, ghost_col;
+    int player_row, player_col;
+
+    map_tile_from_pixel(ghost->x + TILE_SIZE / 2, ghost->y + TILE_SIZE / 2, &ghost_row, &ghost_col);
+    player_get_tile(player, &player_row, &player_col);
+
+    return ghost_row == player_row && ghost_col == player_col;
 }
 
 int ghosts_check_collision(ghost_t *ghosts[GHOST_COUNT], int count, const player_t *player) {
