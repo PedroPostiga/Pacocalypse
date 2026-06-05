@@ -19,10 +19,10 @@ void set_scancode_status(bool status) {
 
 
 int (kbd_subscribe_int)(uint8_t *bit_no) {
-    *bit_no = hook_id;
-
     if (sys_irqsetpolicy(KBC_IRQ, IRQ_REENABLE | IRQ_EXCLUSIVE, &hook_id) != 0)
         return 1;
+
+    *bit_no = hook_id;
 
     return 0;
 }

@@ -156,8 +156,16 @@ static void ghost_move_normal(ghost_t *ghost, const map_t *map, const player_t *
     int dx, dy;
     int target_x = 0, target_y = 0;
 
+    int row = -1, col = -1;
+    map_tile_from_pixel(ghost->x, ghost->y, &row, &col);
+
+    // If ghost is inside the cage, override its target to be the exit of the house
+    if (row >= 10 && row <= 11 && col >= 9 && col <= 11) {
+        target_x = MAP_OFFSET_X + 10 * TILE_SIZE;
+        target_y = MAP_OFFSET_Y + 9 * TILE_SIZE;
+    }
     // Determine target position based on mode
-    if (ghost->mode == GHOST_MODE_SCATTER) {
+    else if (ghost->mode == GHOST_MODE_SCATTER) {
         // Scatter mode: all ghosts target their corner (out of bounds)
         target_x = CORNER_TARGETS[ghost->id][0];
         target_y = CORNER_TARGETS[ghost->id][1];

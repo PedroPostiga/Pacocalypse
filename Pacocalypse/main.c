@@ -59,7 +59,7 @@ int setup(uint8_t *timer_bit_no, uint8_t *kbd_bit_no, uint8_t *mouse_bit_no) {
 
     if (mouse_enable_data_reporting() != 0)
         return 1;
-
+    
     if (mouse_subscribe_int(mouse_bit_no) != 0)
         return 1;
 
@@ -74,6 +74,10 @@ int (proj_main_loop)(int argc, char *argv[]) {
     uint8_t timer_bit_no, kbd_bit_no, mouse_bit_no;
     if (setup(&timer_bit_no, &kbd_bit_no, &mouse_bit_no) != 0)
         return 1;
+
+    uint32_t timer_mask = BIT(timer_bit_no);
+    uint32_t kbd_mask = BIT(kbd_bit_no);
+    uint32_t mouse_mask = BIT(mouse_bit_no);
 
     game_state_t game_state;
     input_state_t input_state;
@@ -114,31 +118,21 @@ int (proj_main_loop)(int argc, char *argv[]) {
         if (is_ipc_notify(ipc_status)) {
             switch (_ENDPOINT_P(msg.m_source)) {
                 case HARDWARE:
-                    if (msg.m_notify.interrupts & BIT(kbd_bit_no)) {
-                        update_keyboard_state(&game_state);
-                    }
-                    if (msg.m_notify.interrupts & BIT(mouse_bit_no)) {
-                        bool was_playing = (game_state.mode == STATE_PLAYING);
-                        if (update_mouse_state(&input_state)) {
-                            if (was_playing) {
-                                game_handle_mouse_click(&game_state, &input_state);
-                            }
-                            menu_handle_mouse(&menu_state, &input_state, &game_state);
-                            pause_handle_mouse(&pause_state, &input_state, &game_state);
-                            input_reset_clicks(&input_state);
-                        }
-                    }
-                    if (msg.m_notify.interrupts & BIT(timer_bit_no)) {
-                        if (update_timer_state(&game_state) != 0) {
-                            printf("Error updating game state\n");
-                            done = true;
-                        }
-                        renderer_update_animations(&game_state, &view_resources);
-                        renderer_draw_game(&game_state, &view_resources, &input_state, &menu_state, &pause_state);
-                        if (game_state.mode == STATE_QUIT) {
-                            done = true;
-                        }
-                    }
+                    if (msg.m_notify.interrupts & kbd_mask)
+                        done = update_keyboard_state(&game_state) || done;
+
+                    if (msg.m_notify.interrupts & mouse_mask)
+                        done = update_mouse_state(&game_state,
+                                                  &input_state,
+                                                  &menu_state,
+                                                  &pause_state) || done;
+
+                    if (msg.m_notify.interrupts & timer_mask)
+                        done = update_timer_state(&game_state,
+                                                  &view_resources,
+                                                  &input_state,
+                                                  &menu_state,
+                                                  &pause_state) || done;
                     break;
                 default:
                     break;

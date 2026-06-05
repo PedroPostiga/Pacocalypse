@@ -1,15 +1,17 @@
 #include "control.h"
 
-void update_keyboard_state(game_state_t *state) {
-    if (!state) return;
+bool update_keyboard_state(game_state_t *state) {
+    if (!state) return false;
 
     kbc_ih();
+    uint8_t scancode = 0;
 
-    if (!get_scancode_status())
-        return;
+    if (!get_scancode_status()) {
+        return false;
+    }
 
     set_scancode_status(false);
-    uint8_t scancode = get_scancode();
+    scancode = get_scancode();
 
     switch (state->mode) {
         case STATE_PLAYING:
@@ -29,9 +31,15 @@ void update_keyboard_state(game_state_t *state) {
         default:
             break;
     }
+
+    return state->mode == STATE_QUIT;
 }
 
-bool update_mouse_state(input_state_t *input) {
+bool update_mouse_state(game_state_t *state,
+                        input_state_t *input,
+                        menu_state_t *menu,
+                        pause_state_t *pause) {
+    if (!state) return false;
     if (!input) return false;
 
     mouse_ih();
@@ -47,12 +55,40 @@ bool update_mouse_state(input_state_t *input) {
         return false;
 
     input_update(input, &pp);
-    return true;
+
+    switch (state->mode) {
+        case STATE_PLAYING:
+            game_handle_mouse_click(state, input);
+            break;
+        case STATE_MENU:
+            menu_handle_mouse(menu, input, state);
+            break;
+        case STATE_PAUSED:
+            pause_handle_mouse(pause, input, state);
+            break;
+        default:
+            break;
+    }
+
+    input_reset_clicks(input);
+    return state->mode == STATE_QUIT;
 }
 
-int update_timer_state(game_state_t *state) {
-    if (!state) return 1;
+bool update_timer_state(game_state_t *state,
+                        const view_resources_t *resources,
+                        const input_state_t *input,
+                        const menu_state_t *menu,
+                        const pause_state_t *pause) {
+    if (!state) return false;
 
     timer_ih();
-    return game_update(state);
+    if (game_update(state) != 0) {
+        printf("Error updating game state\n");
+        return true;
+    }
+
+    renderer_update_animations(state, resources);
+    renderer_draw_game(state, resources, input, menu, pause);
+
+    return state->mode == STATE_QUIT;
 }
