@@ -9,6 +9,7 @@
 
 typedef struct {
     button_t paused_button;
+    button_t quit_button;
 } pause_state_t;
 
 void pause_init(pause_state_t *pause, font_t *font);

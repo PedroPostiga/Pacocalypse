@@ -84,6 +84,33 @@ static bool is_tile_aligned(const ghost_t *ghost) {
     }
 }
 
+// Returns true if the entire ghost sprite (all 4 corners) is within the same single tile.
+// This ensures ghosts can only change direction when fully centered in a tile.
+static bool ghost_is_fully_in_single_tile(const ghost_t *ghost) {
+    // Get the tile coordinates for each corner
+    int corners[4][2] = {
+        { ghost->x + 1,             ghost->y + 1             },              // Top-left
+        { ghost->x + TILE_SIZE - 2, ghost->y + 1             },              // Top-right
+        { ghost->x + 1,             ghost->y + TILE_SIZE - 2 },              // Bottom-left
+        { ghost->x + TILE_SIZE - 2, ghost->y + TILE_SIZE - 2 }               // Bottom-right
+    };
+
+    // Calculate which tile the first corner is in
+    int first_col = (corners[0][0] - MAP_OFFSET_X) / TILE_SIZE;
+    int first_row = (corners[0][1] - MAP_OFFSET_Y) / TILE_SIZE;
+
+    // Check that all corners are in the same tile
+    for (int i = 0; i < 4; i++) {
+        int col = (corners[i][0] - MAP_OFFSET_X) / TILE_SIZE;
+        int row = (corners[i][1] - MAP_OFFSET_Y) / TILE_SIZE;
+        
+        if (col != first_col || row != first_row)
+            return false;  // Corner is in a different tile
+    }
+    
+    return true;  // All corners are in the same tile
+}
+
 // Calculates the Manhattan distance between two positions
 static int shortest_distance(int x1, int y1, int x2, int y2) {
     return abs(x1 - x2) + abs(y1 - y2);
@@ -93,7 +120,8 @@ static int shortest_distance(int x1, int y1, int x2, int y2) {
 // and selecting the one that reduces distance to the target the most.
 // Never reverses direction unless it's the only walkable option.
 static direction_t pick_best_direction(const ghost_t *ghost, const map_t *map, int target_x, int target_y) {
-    if (!is_tile_aligned(ghost))
+    // Only allow direction changes when the ghost is fully within a single tile
+    if (!ghost_is_fully_in_single_tile(ghost))
         return ghost->direction;
 
     direction_t best_dir = DIR_NONE;
@@ -240,7 +268,7 @@ static void ghost_move_normal(ghost_t *ghost, const map_t *map, const player_t *
     // Pick best direction towards target and move
     direction_t best_dir = pick_best_direction(ghost, map, target_x, target_y);
     
-    if (best_dir != ghost->direction && is_tile_aligned(ghost)) {
+    if (best_dir != ghost->direction && ghost_is_fully_in_single_tile(ghost)) {
         ghost->direction = best_dir;
     }
 
@@ -260,8 +288,9 @@ static void ghost_move_normal(ghost_t *ghost, const map_t *map, const player_t *
 static void ghost_move_random(ghost_t *ghost, const map_t *map) {
     if (!ghost || !map) return;
 
-    if (!is_tile_aligned(ghost))
-        return;  // Only pick direction at tile junctions
+    // Only pick direction when fully within a single tile
+    if (!ghost_is_fully_in_single_tile(ghost))
+        return;
 
     int speed = GHOST_SPEED;
     int dx, dy;

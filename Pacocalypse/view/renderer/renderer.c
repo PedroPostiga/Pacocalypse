@@ -81,6 +81,11 @@ static void renderer_draw_player(const player_t* player, const game_sprites_t *s
 
 static animated_sprite_t* renderer_select_ghost_sprite(const ghost_t* ghost, const game_sprites_t *sprites) {
     if (!ghost || !sprites) return NULL;
+    
+    // Show eyes when dead or respawning
+    if (ghost->state == GHOST_DEAD || ghost->state == GHOST_RESPAWNING)
+        return sprites->ghost_eyes;
+    
     if (ghost->state == GHOST_FRIGHTENED)
         return sprites->frightened_ghost_anim;
 
@@ -93,13 +98,38 @@ static animated_sprite_t* renderer_select_ghost_sprite(const ghost_t* ghost, con
     }
 }
 
+// Maps ghost direction to eyes sprite frame index
+// Eyes frames are ordered: [UP=0, RIGHT=1, DOWN=2, LEFT=3]
+static int renderer_get_eyes_frame(direction_t direction) {
+    switch (direction) {
+        case DIR_UP:    return 0;  // eyes_up
+        case DIR_DOWN:  return 2;  // eyes_down
+        case DIR_LEFT:  return 3;  // eyes_left
+        case DIR_RIGHT: return 1;  // eyes_right
+        default:        return 0;  // Default to up
+    }
+}
+
 static void renderer_draw_ghost(ghost_t* const ghosts[GHOST_COUNT], const game_sprites_t *sprites) {
     for (int i = 0; i < GHOST_COUNT; i++) {
         ghost_t *ghost = ghosts[i];
-        if (!ghost || ghost->state == GHOST_DEAD) continue;
+        if (!ghost) continue;
+        
+        // Skip drawing if ghost is permanently dead (not respawning)
+        if (ghost->state == GHOST_DEAD) {
+            // Still need to draw eyes
+        }
 
         animated_sprite_t *ghost_anim = renderer_select_ghost_sprite(ghost, sprites);
         if (!ghost_anim) continue;
+
+        // For eyes sprites, set the frame based on direction
+        if (ghost->state == GHOST_DEAD || ghost->state == GHOST_RESPAWNING) {
+            int eyes_frame = renderer_get_eyes_frame(ghost->direction);
+            if (eyes_frame >= 0 && eyes_frame < (int)ghost_anim->no_pixmaps) {
+                ghost_anim->current_pixmap = eyes_frame;
+            }
+        }
 
         sprite_t *frame = animated_sprite_get_current_frame(ghost_anim);
         draw_sprite(frame, ghost->x, ghost->y);

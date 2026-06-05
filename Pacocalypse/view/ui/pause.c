@@ -15,6 +15,17 @@ void pause_init(pause_state_t *pause, font_t *font) {
     pause->paused_button.back_color = DARK_GRAY;
     pause->paused_button.hover_frame_color = CRIMSON_RED;
     strcpy(pause->paused_button.text, "PAUSED");
+
+    pause->quit_button.x = (SCREEN_WIDTH - 200) / 2;
+    pause->quit_button.y = 400;
+    pause->quit_button.width = 200;
+    pause->quit_button.height = 50;
+    pause->quit_button.sp = NULL;
+    pause->quit_button.hover_sp = NULL;
+    pause->quit_button.font = font;
+    pause->quit_button.back_color = MILD_GREEN;
+    pause->quit_button.hover_frame_color = DARK_GRAY;
+    strcpy(pause->quit_button.text, "QUIT");
 }
 
 void pause_handle_mouse(pause_state_t *pause, const input_state_t *input, game_state_t *game_state) {
@@ -25,6 +36,9 @@ void pause_handle_mouse(pause_state_t *pause, const input_state_t *input, game_s
     if (button_is_hovered(&pause->paused_button, input->mouse_x, input->mouse_y)) {
         game_state->mode = STATE_PLAYING;
     }
+    if (button_is_hovered(&pause->quit_button, input->mouse_x, input->mouse_y)) {
+        game_state->mode = STATE_MENU;
+    }
 }
 
 void pause_draw(const pause_state_t *pause, const input_state_t *input, const game_sprites_t *sprites) {
@@ -33,4 +47,5 @@ void pause_draw(const pause_state_t *pause, const input_state_t *input, const ga
     if (!pause || !input) return;
 
     renderer_draw_button(&pause->paused_button, input->mouse_x, input->mouse_y);
+    renderer_draw_button(&pause->quit_button, input->mouse_x, input->mouse_y);
 }

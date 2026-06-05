@@ -25,9 +25,9 @@ static void game_check_ghost_collisions(game_state_t* state) {
         } else if (ghost->state == GHOST_ALIVE) {
             if (!player_die(state->player, state->map)) {
                 state->mode = STATE_GAME_OVER;
+                ghosts_reset_all(state->ghosts, state->num_ghosts);
                 return;
             }
-            ghosts_reset_all(state->ghosts, state->num_ghosts);
         }
     }
 }
