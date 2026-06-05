@@ -9,7 +9,7 @@
 /*   INTERNAL HELPERS    */
 /* ===================== */
 
-// All four cardinal directions as an array — used when picking a random turn
+// All four cardinal directions as an array ??? used when picking a random turn
 static const direction_t ALL_DIRS[4] = { DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT };
 
 // Corner targets for scatter mode (out of bounds so ghosts never fully reach them)
@@ -21,7 +21,25 @@ static const int CORNER_TARGETS[GHOST_COUNT][2] = {
     { MAP_OFFSET_X - TILE_SIZE,                          MAP_OFFSET_Y + MAP_ROWS * TILE_SIZE }    // Orange: bottom-left
 };
 
-// Returns the opposite of a direction — ghosts never reverse unless forced
+typedef struct {
+    ghost_mode_t mode;
+    uint32_t ticks;
+} ghost_mode_phase_t;
+
+static const ghost_mode_phase_t MODE_PHASES[] = {
+    { GHOST_MODE_SCATTER, 7 * 60 },
+    { GHOST_MODE_CHASE, 20 * 60 },
+    { GHOST_MODE_SCATTER, 7 * 60 },
+    { GHOST_MODE_CHASE, 20 * 60 },
+    { GHOST_MODE_SCATTER, 5 * 60 },
+    { GHOST_MODE_CHASE, 20 * 60 },
+    { GHOST_MODE_SCATTER, 5 * 60 },
+    { GHOST_MODE_CHASE, 0 },
+};
+
+static int ghost_mode_phase = 0;
+
+// Returns the opposite of a direction ??? ghosts never reverse unless forced
 static direction_t opposite_dir(direction_t dir) {
     switch (dir) {
         case DIR_UP:    return DIR_DOWN;
@@ -64,24 +82,32 @@ static bool can_move_to(const map_t *map, int px, int py) {
     return true;
 }
 
-// Returns true if the ghost is aligned to the tile grid on the axis
-// perpendicular to its direction of travel. Only at these moments is
-// a direction change allowed — this keeps ghosts inside corridors.
-static bool is_tile_aligned(const ghost_t *ghost) {
-    int rel_x = (ghost->x - MAP_OFFSET_X) % TILE_SIZE;
-    int rel_y = (ghost->y - MAP_OFFSET_Y) % TILE_SIZE;
 
-    // Allow a small tolerance window equal to GHOST_SPEED so we never miss it
-    bool aligned_x = (rel_x <= GHOST_SPEED || rel_x >= TILE_SIZE - GHOST_SPEED);
-    bool aligned_y = (rel_y <= GHOST_SPEED || rel_y >= TILE_SIZE - GHOST_SPEED);
+// Returns true if the entire ghost sprite (all 4 corners) is within the same single tile.
+// This ensures ghosts can only change direction when fully centered in a tile.
+static bool ghost_is_fully_in_single_tile(const ghost_t *ghost) {
+    // Get the tile coordinates for each corner
+    int corners[4][2] = {
+        { ghost->x + 1,             ghost->y + 1             },              // Top-left
+        { ghost->x + TILE_SIZE - 2, ghost->y + 1             },              // Top-right
+        { ghost->x + 1,             ghost->y + TILE_SIZE - 2 },              // Bottom-left
+        { ghost->x + TILE_SIZE - 2, ghost->y + TILE_SIZE - 2 }               // Bottom-right
+    };
 
-    switch (ghost->direction) {
-        case DIR_LEFT:
-        case DIR_RIGHT: return aligned_y;  // moving horizontally → must be aligned on Y
-        case DIR_UP:
-        case DIR_DOWN:  return aligned_x;  // moving vertically   → must be aligned on X
-        default:        return true;        // DIR_NONE: always allow a pick
+    // Calculate which tile the first corner is in
+    int first_col = (corners[0][0] - MAP_OFFSET_X) / TILE_SIZE;
+    int first_row = (corners[0][1] - MAP_OFFSET_Y) / TILE_SIZE;
+
+    // Check that all corners are in the same tile
+    for (int i = 0; i < 4; i++) {
+        int col = (corners[i][0] - MAP_OFFSET_X) / TILE_SIZE;
+        int row = (corners[i][1] - MAP_OFFSET_Y) / TILE_SIZE;
+
+        if (col != first_col || row != first_row)
+            return false;  // Corner is in a different tile
     }
+
+    return true;  // All corners are in the same tile
 }
 
 // Calculates the Manhattan distance between two positions
@@ -89,11 +115,99 @@ static int shortest_distance(int x1, int y1, int x2, int y2) {
     return abs(x1 - x2) + abs(y1 - y2);
 }
 
+static direction_t pick_path_direction_to_tile(const ghost_t *ghost, const map_t *map, int target_row, int target_col) {
+    int start_row, start_col;
+    map_tile_from_pixel(ghost->x + TILE_SIZE / 2, ghost->y + TILE_SIZE / 2, &start_row, &start_col);
+
+    if (start_row < 0 || start_row >= MAP_ROWS || start_col < 0 || start_col >= MAP_COLS)
+        return DIR_NONE;
+    if (target_row < 0 || target_row >= MAP_ROWS || target_col < 0 || target_col >= MAP_COLS)
+        return DIR_NONE;
+    if (!map_is_walkable(map, target_row, target_col))
+        return DIR_NONE;
+
+    int dist[MAP_ROWS][MAP_COLS];
+    int queue_rows[MAP_ROWS * MAP_COLS];
+    int queue_cols[MAP_ROWS * MAP_COLS];
+    int head = 0, tail = 0;
+
+    for (int row = 0; row < MAP_ROWS; row++) {
+        for (int col = 0; col < MAP_COLS; col++) {
+            dist[row][col] = -1;
+        }
+    }
+
+    dist[target_row][target_col] = 0;
+    queue_rows[tail] = target_row;
+    queue_cols[tail] = target_col;
+    tail++;
+
+    while (head < tail) {
+        int row = queue_rows[head];
+        int col = queue_cols[head];
+        head++;
+
+        for (int i = 0; i < 4; i++) {
+            int dx, dy;
+            dir_to_delta(ALL_DIRS[i], 1, &dx, &dy);
+
+            int next_row = row + dy;
+            int next_col = col + dx;
+
+            if (next_row < 0 || next_row >= MAP_ROWS || next_col < 0 || next_col >= MAP_COLS)
+                continue;
+            if (dist[next_row][next_col] != -1)
+                continue;
+            if (!map_is_walkable(map, next_row, next_col))
+                continue;
+
+            dist[next_row][next_col] = dist[row][col] + 1;
+            queue_rows[tail] = next_row;
+            queue_cols[tail] = next_col;
+            tail++;
+        }
+    }
+
+    direction_t best_dir = DIR_NONE;
+    int best_distance = INT_MAX;
+
+    for (int i = 0; i < 4; i++) {
+        int dx, dy;
+        dir_to_delta(ALL_DIRS[i], 1, &dx, &dy);
+
+        int next_row = start_row + dy;
+        int next_col = start_col + dx;
+
+        if (next_row < 0 || next_row >= MAP_ROWS || next_col < 0 || next_col >= MAP_COLS)
+            continue;
+        if (dist[next_row][next_col] < 0 || dist[next_row][next_col] >= best_distance)
+            continue;
+
+        int move_dx, move_dy;
+        dir_to_delta(ALL_DIRS[i], GHOST_SPEED, &move_dx, &move_dy);
+        if (!can_move_to(map, ghost->x + move_dx, ghost->y + move_dy))
+            continue;
+
+        best_distance = dist[next_row][next_col];
+        best_dir = ALL_DIRS[i];
+    }
+
+    return best_dir;
+}
+
+static direction_t pick_respawn_direction(const ghost_t *ghost, const map_t *map) {
+    int spawn_row, spawn_col;
+    map_tile_from_pixel(ghost->spawn_x + TILE_SIZE / 2, ghost->spawn_y + TILE_SIZE / 2, &spawn_row, &spawn_col);
+
+    return pick_path_direction_to_tile(ghost, map, spawn_row, spawn_col);
+}
+
 // Picks the best direction towards a target by trying each cardinal direction
 // and selecting the one that reduces distance to the target the most.
 // Never reverses direction unless it's the only walkable option.
 static direction_t pick_best_direction(const ghost_t *ghost, const map_t *map, int target_x, int target_y) {
-    if (!is_tile_aligned(ghost))
+    // Only allow direction changes when the ghost is fully within a single tile
+    if (!ghost_is_fully_in_single_tile(ghost))
         return ghost->direction;
 
     direction_t best_dir = DIR_NONE;
@@ -104,7 +218,7 @@ static direction_t pick_best_direction(const ghost_t *ghost, const map_t *map, i
     // Try each direction
     for (int i = 0; i < 4; i++) {
         direction_t dir = ALL_DIRS[i];
-        
+
         // Skip the reverse direction unless it's the only option
         if (dir == reverse)
             continue;
@@ -156,8 +270,17 @@ static void ghost_move_normal(ghost_t *ghost, const map_t *map, const player_t *
     int dx, dy;
     int target_x = 0, target_y = 0;
 
+    int row = -1, col = -1;
+    map_tile_from_pixel(ghost->x + TILE_SIZE / 2, ghost->y + TILE_SIZE / 2, &row, &col);
+    bool inside_house = (row >= 10 && row <= 11 && col >= 9 && col <= 11);
+
+    // If ghost is inside the cage, override its target to be the exit of the house
+    if (inside_house) {
+        target_x = MAP_OFFSET_X + 10 * TILE_SIZE;
+        target_y = MAP_OFFSET_Y + 9 * TILE_SIZE;
+    }
     // Determine target position based on mode
-    if (ghost->mode == GHOST_MODE_SCATTER) {
+    else if (ghost->mode == GHOST_MODE_SCATTER) {
         // Scatter mode: all ghosts target their corner (out of bounds)
         target_x = CORNER_TARGETS[ghost->id][0];
         target_y = CORNER_TARGETS[ghost->id][1];
@@ -173,7 +296,7 @@ static void ghost_move_normal(ghost_t *ghost, const map_t *map, const player_t *
             // Pink ghost: target 4 tiles ahead of player's current direction
             target_x = player->x;
             target_y = player->y;
-            
+
             // Project 4 tiles (4 * TILE_SIZE pixels) ahead in player's direction
             int tiles_ahead = 4 * TILE_SIZE;
             switch (player->direction) {
@@ -197,16 +320,16 @@ static void ghost_move_normal(ghost_t *ghost, const map_t *map, const player_t *
                 case DIR_RIGHT: target_x += tiles_ahead; break;
                 default: break;
             }
-            
+
             // 2. Find red ghost and compute vector from red to target point
             if (ghosts[GHOST_RED] != NULL) {
                 int red_x = ghosts[GHOST_RED]->x;
                 int red_y = ghosts[GHOST_RED]->y;
-                
+
                 // Vector from red ghost to target point
                 int vector_x = target_x - red_x;
                 int vector_y = target_y - red_y;
-                
+
                 // 3. Double the vector to get final target
                 target_x = red_x + (vector_x * 2);
                 target_y = red_y + (vector_y * 2);
@@ -215,7 +338,7 @@ static void ghost_move_normal(ghost_t *ghost, const map_t *map, const player_t *
         else if (ghost->id == GHOST_ORANGE) {
             // Orange ghost: chase player, but retreat if too close (within 8 tiles)
             int distance = shortest_distance(ghost->x, ghost->y, player->x, player->y);
-            
+
             // 8 tiles = 8 * TILE_SIZE = 256 pixels
             if (distance < (8 * TILE_SIZE)) {
                 // Too close: retreat to corner (bottom-left for orange)
@@ -230,9 +353,15 @@ static void ghost_move_normal(ghost_t *ghost, const map_t *map, const player_t *
     }
 
     // Pick best direction towards target and move
-    direction_t best_dir = pick_best_direction(ghost, map, target_x, target_y);
-    
-    if (best_dir != ghost->direction && is_tile_aligned(ghost)) {
+    direction_t best_dir = inside_house
+        ? pick_path_direction_to_tile(ghost, map, 9, 10)
+        : pick_best_direction(ghost, map, target_x, target_y);
+
+    if (best_dir == DIR_NONE) {
+        best_dir = pick_best_direction(ghost, map, target_x, target_y);
+    }
+
+    if (best_dir != ghost->direction && ghost_is_fully_in_single_tile(ghost)) {
         ghost->direction = best_dir;
     }
 
@@ -252,12 +381,22 @@ static void ghost_move_normal(ghost_t *ghost, const map_t *map, const player_t *
 static void ghost_move_random(ghost_t *ghost, const map_t *map) {
     if (!ghost || !map) return;
 
-    if (!is_tile_aligned(ghost))
-        return;  // Only pick direction at tile junctions
-
     int speed = GHOST_SPEED;
     int dx, dy;
-    
+
+    // Only pick direction when fully within a single tile
+    if (!ghost_is_fully_in_single_tile(ghost)) {
+        dir_to_delta(ghost->direction, speed, &dx, &dy);
+        int new_x = ghost->x + dx;
+        int new_y = ghost->y + dy;
+
+        if (can_move_to(map, new_x, new_y)) {
+            ghost->x = new_x;
+            ghost->y = new_y;
+        }
+        return;
+    }
+
     // Collect all walkable directions, preferring non-reverse
     direction_t walkable_dirs[4];
     int walkable_count = 0;
@@ -265,7 +404,7 @@ static void ghost_move_random(ghost_t *ghost, const map_t *map) {
 
     for (int i = 0; i < 4; i++) {
         direction_t dir = ALL_DIRS[i];
-        
+
         // Skip reverse direction unless it's the only option
         if (dir == reverse)
             continue;
@@ -308,28 +447,36 @@ static void ghost_move_random(ghost_t *ghost, const map_t *map) {
 
 // Frightened movement: random movement at half speed (every other tick)
 static void ghost_move_frightened(ghost_t *ghost, const map_t *map) {
-    // Move only on even ticks of the countdown → effectively half speed
+    // Move only on even ticks of the countdown ??? effectively half speed
     if (ghost->state_ticks_remaining % 2 == 0)
         ghost_move_random(ghost, map);
 }
 
-// Respawn movement: ghost heads back to spawn point at double speed
-// Uses pathfinding to find the shortest path and moves at 2x GHOST_SPEED
+// Respawn movement: eyes head back to spawn through walkable corridors.
 static void ghost_move_respawning(ghost_t *ghost, const map_t *map) {
     if (!ghost || !map) return;
 
-    // Move towards spawn at double speed
-    int speed = GHOST_SPEED * 2;
-    int dx, dy;
+    int speed = GHOST_SPEED;
+    int dist_to_spawn = shortest_distance(ghost->x, ghost->y, ghost->spawn_x, ghost->spawn_y);
+    if (dist_to_spawn <= speed) {
+        ghost->x = ghost->spawn_x;
+        ghost->y = ghost->spawn_y;
+        ghost->direction = DIR_LEFT;
+        ghost->state = GHOST_ALIVE;
+        ghost->state_ticks_remaining = 0;
+        return;
+    }
 
-    // Calculate best direction towards spawn point
-    direction_t best_dir = pick_best_direction(ghost, map, ghost->spawn_x, ghost->spawn_y);
-    
-    if (best_dir != ghost->direction && is_tile_aligned(ghost)) {
+    direction_t best_dir = pick_respawn_direction(ghost, map);
+    if (best_dir == DIR_NONE) {
+        best_dir = pick_best_direction(ghost, map, ghost->spawn_x, ghost->spawn_y);
+    }
+
+    if (best_dir != DIR_NONE && ghost_is_fully_in_single_tile(ghost)) {
         ghost->direction = best_dir;
     }
 
-    // Move in current direction at double speed
+    int dx, dy;
     dir_to_delta(ghost->direction, speed, &dx, &dy);
     int new_x = ghost->x + dx;
     int new_y = ghost->y + dy;
@@ -337,27 +484,59 @@ static void ghost_move_respawning(ghost_t *ghost, const map_t *map) {
     if (can_move_to(map, new_x, new_y)) {
         ghost->x = new_x;
         ghost->y = new_y;
+        return;
     }
 
-    // Check if ghost has reached spawn point (within one tile)
-    int dist_to_spawn = shortest_distance(ghost->x, ghost->y, ghost->spawn_x, ghost->spawn_y);
-    if (dist_to_spawn < TILE_SIZE) {
-        // Snap to exact spawn position and resume normal (chase) state
-        ghost->x = ghost->spawn_x;
-        ghost->y = ghost->spawn_y;
-        ghost->direction = DIR_LEFT;
-        ghost->state = GHOST_ALIVE;
-        ghost->state_ticks_remaining = 0;
+    direction_t reverse = opposite_dir(ghost->direction);
+    for (int i = 0; i < 4; i++) {
+        direction_t dir = ALL_DIRS[i];
+        if (dir == reverse)
+            continue;
+
+        dir_to_delta(dir, speed, &dx, &dy);
+        new_x = ghost->x + dx;
+        new_y = ghost->y + dy;
+
+        if (can_move_to(map, new_x, new_y)) {
+            ghost->direction = dir;
+            ghost->x = new_x;
+            ghost->y = new_y;
+            return;
+        }
+    }
+
+    dir_to_delta(reverse, speed, &dx, &dy);
+    new_x = ghost->x + dx;
+    new_y = ghost->y + dy;
+
+    if (can_move_to(map, new_x, new_y)) {
+        ghost->direction = reverse;
+        ghost->x = new_x;
+        ghost->y = new_y;
     }
 }
 
 // Respawn: transition from DEAD to RESPAWNING state
 static void ghost_respawn(ghost_t *ghost) {
     if (!ghost) return;
-    
+
     // Transition to respawning state
     ghost->state = GHOST_RESPAWNING;
     ghost->state_ticks_remaining = 0;
+}
+
+static void ghost_reset_to_spawn(ghost_t *ghost) {
+    if (!ghost) return;
+
+    ghost->x = ghost->spawn_x;
+    ghost->y = ghost->spawn_y;
+    ghost->direction = DIR_LEFT;
+    ghost->state = GHOST_ALIVE;
+    ghost->state_ticks_remaining = 0;
+    ghost->mode = MODE_PHASES[0].mode;
+    ghost->mode_ticks_remaining = MODE_PHASES[0].ticks;
+    ghost->anim_frame = 0;
+    ghost->anim_tick_counter = 0;
 }
 
 /* ===================== */
@@ -374,10 +553,10 @@ ghost_t *ghost_create(int x, int y, ghost_id_t id) {
     ghost->spawn_y              = y;
     ghost->direction            = DIR_LEFT;
     ghost->state                = GHOST_ALIVE;
-    ghost->mode                 = GHOST_MODE_SCATTER;  // Start in scatter mode (will switch to chase after timer)
+    ghost->mode                 = MODE_PHASES[0].mode;
     ghost->id                   = id;
     ghost->state_ticks_remaining = 0;
-    ghost->mode_ticks_remaining  = GHOST_SCATTER_MODE_TICKS;  // Start with scatter mode duration
+    ghost->mode_ticks_remaining  = MODE_PHASES[0].ticks;
     ghost->anim_frame           = 0;
     ghost->anim_tick_counter    = 0;
 
@@ -390,6 +569,7 @@ void ghost_destroy(ghost_t *ghost) {
 
 int ghosts_create_all(const map_t *map, ghost_t *ghosts[GHOST_COUNT]) {
     int count = 0;
+    ghost_mode_phase = 0;
 
     for (int row = 0; row < MAP_ROWS && count < GHOST_COUNT; row++) {
         for (int col = 0; col < MAP_COLS && count < GHOST_COUNT; col++) {
@@ -420,9 +600,11 @@ void ghosts_destroy_all(ghost_t *ghosts[GHOST_COUNT], int count) {
 }
 
 void ghosts_reset_all(ghost_t *ghosts[GHOST_COUNT], int count) {
+    ghost_mode_phase = 0;
+
     for (int i = 0; i < count; i++) {
         if (ghosts[i])
-            ghost_respawn(ghosts[i]);
+            ghost_reset_to_spawn(ghosts[i]);
     }
 }
 
@@ -508,13 +690,13 @@ void ghosts_tick_all_with_context(ghost_t *ghosts[GHOST_COUNT], int count, const
 
 void ghost_frighten(ghost_t *ghost) {
     if (!ghost) return;
-    // Dead ghosts are not affected — they are already out of play
+    // Dead ghosts are not affected ??? they are already out of play
     if (ghost->state == GHOST_DEAD) return;
 
     ghost->state                = GHOST_FRIGHTENED;
     ghost->state_ticks_remaining = GHOST_FRIGHTENED_TICKS;
 
-    // Reverse direction immediately — classic Pac-Man behaviour on power-up
+    // Reverse direction immediately ??? classic Pac-Man behaviour on power-up
     direction_t rev = opposite_dir(ghost->direction);
     if (rev != DIR_NONE)
         ghost->direction = rev;
@@ -529,9 +711,10 @@ void ghosts_frighten_all(ghost_t *ghosts[GHOST_COUNT], int count) {
 
 void ghost_eat(ghost_t *ghost) {
     if (!ghost) return;
-    ghost->state                = GHOST_DEAD;
-    ghost->state_ticks_remaining = GHOST_DEAD_TICKS;
-    ghost->direction            = DIR_NONE;
+    ghost_respawn(ghost);
+    ghost->direction = opposite_dir(ghost->direction);
+    if (ghost->direction == DIR_NONE)
+        ghost->direction = DIR_LEFT;
 }
 
 /* ===================== */
@@ -546,28 +729,20 @@ ghost_mode_t ghosts_update_mode(ghost_t *ghosts[GHOST_COUNT], int count) {
 
     // All ghosts share the same mode, so just check the first one
     ghost_t *ref_ghost = ghosts[0];
+    int last_phase = (int)(sizeof(MODE_PHASES) / sizeof(MODE_PHASES[0])) - 1;
 
     // Decrement timer
     if (ref_ghost->mode_ticks_remaining > 0)
         ref_ghost->mode_ticks_remaining--;
 
-    // Switch mode when timer expires
-    if (ref_ghost->mode_ticks_remaining == 0) {
-        if (ref_ghost->mode == GHOST_MODE_SCATTER) {
-            // Switch to chase mode
-            for (int i = 0; i < count; i++) {
-                if (ghosts[i]) {
-                    ghosts[i]->mode = GHOST_MODE_CHASE;
-                    ghosts[i]->mode_ticks_remaining = GHOST_CHASE_MODE_TICKS;
-                }
-            }
-        } else {
-            // Switch to scatter mode
-            for (int i = 0; i < count; i++) {
-                if (ghosts[i]) {
-                    ghosts[i]->mode = GHOST_MODE_SCATTER;
-                    ghosts[i]->mode_ticks_remaining = GHOST_SCATTER_MODE_TICKS;
-                }
+    // Switch mode when timer expires. The final chase phase has 0 ticks and lasts forever.
+    if (ref_ghost->mode_ticks_remaining == 0 && ghost_mode_phase < last_phase) {
+        ghost_mode_phase++;
+
+        for (int i = 0; i < count; i++) {
+            if (ghosts[i]) {
+                ghosts[i]->mode = MODE_PHASES[ghost_mode_phase].mode;
+                ghosts[i]->mode_ticks_remaining = MODE_PHASES[ghost_mode_phase].ticks;
             }
         }
     }
@@ -577,6 +752,8 @@ ghost_mode_t ghosts_update_mode(ghost_t *ghosts[GHOST_COUNT], int count) {
 
 // Sets all ghosts to a specific mode immediately
 void ghosts_set_mode(ghost_t *ghosts[GHOST_COUNT], int count, ghost_mode_t mode) {
+    ghost_mode_phase = (mode == GHOST_MODE_SCATTER) ? 0 : 1;
+
     for (int i = 0; i < count; i++) {
         if (ghosts[i]) {
             ghosts[i]->mode = mode;
@@ -588,10 +765,12 @@ void ghosts_set_mode(ghost_t *ghosts[GHOST_COUNT], int count, ghost_mode_t mode)
 
 // Resets all ghosts to initial mode (scatter with full timer)
 void ghosts_reset_mode(ghost_t *ghosts[GHOST_COUNT], int count) {
+    ghost_mode_phase = 0;
+
     for (int i = 0; i < count; i++) {
         if (ghosts[i]) {
-            ghosts[i]->mode = GHOST_MODE_SCATTER;
-            ghosts[i]->mode_ticks_remaining = GHOST_SCATTER_MODE_TICKS;
+            ghosts[i]->mode = MODE_PHASES[0].mode;
+            ghosts[i]->mode_ticks_remaining = MODE_PHASES[0].ticks;
         }
     }
 }
@@ -606,11 +785,13 @@ bool ghost_collides_with_player(const ghost_t *ghost, const player_t *player) {
     // Dead ghosts cannot interact with the player
     if (ghost->state == GHOST_DEAD) return false;
 
-    // AABB overlap — same bounding box size (TILE_SIZE) for both entities
-    return ghost->x < player->x + TILE_SIZE &&
-           ghost->x + TILE_SIZE > player->x &&
-           ghost->y < player->y + TILE_SIZE &&
-           ghost->y + TILE_SIZE > player->y;
+    int ghost_row, ghost_col;
+    int player_row, player_col;
+
+    map_tile_from_pixel(ghost->x + TILE_SIZE / 2, ghost->y + TILE_SIZE / 2, &ghost_row, &ghost_col);
+    player_get_tile(player, &player_row, &player_col);
+
+    return ghost_row == player_row && ghost_col == player_col;
 }
 
 int ghosts_check_collision(ghost_t *ghosts[GHOST_COUNT], int count, const player_t *player) {

@@ -6,23 +6,29 @@
 #include "font.h"
 #include "sprite.h"
 
+/**
+ * @brief Button color constants used by the UI.
+ */
 typedef enum {
-    MILD_GREEN = 0x00008800,
-    DARK_GRAY = 0x333333,
-    CRIMSON_RED = 0xaa0000
+    MILD_GREEN = 0x00008800, /**< Muted green button color. */
+    DARK_GRAY = 0x333333,    /**< Dark gray button/frame color. */
+    CRIMSON_RED = 0xaa0000   /**< Red button color. */
 } button_color_t;
 
+/**
+ * @brief Rectangular UI button with optional sprites and text.
+ */
 typedef struct {
-    int x; // Added coordinates since sprite_t doesn't have them
-    int y;
-    int width;
-    int height;
-    sprite_t *sp;
-    sprite_t *hover_sp;
-    char text[100];
-    font_t *font;
-    button_color_t back_color;
-    button_color_t hover_frame_color;
+    int x;                              /**< Left screen coordinate. */
+    int y;                              /**< Top screen coordinate. */
+    int width;                          /**< Button width in pixels. */
+    int height;                         /**< Button height in pixels. */
+    sprite_t *sp;                       /**< Optional default button sprite. */
+    sprite_t *hover_sp;                 /**< Optional hover button sprite. */
+    char text[100];                     /**< Button label. */
+    font_t *font;                       /**< Font used for the label. */
+    button_color_t back_color;          /**< Background color when no sprite is used. */
+    button_color_t hover_frame_color;   /**< Frame color used while hovered. */
 } button_t;
 
 /**

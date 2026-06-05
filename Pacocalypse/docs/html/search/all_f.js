@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['score_0',['score',['../structplayer__t.html#a68b541a725bf26fc654e1d80dbc21842',1,'player_t']]],
+  ['score_5fghost_5feat_1',['SCORE_GHOST_EAT',['../player_8h.html#a2920c5f76cdc1b5fc418cb28a5d2cb14',1,'player.h']]],
+  ['score_5fpellet_2',['SCORE_PELLET',['../player_8h.html#aa8cc9cfc1bc3be9319a25ccad0d32725',1,'player.h']]],
+  ['score_5fpower_5fup_3',['SCORE_POWER_UP',['../player_8h.html#a12c559bdd030ae33c2f9d618ba3a5729',1,'player.h']]],
+  ['screen_5fheight_4',['SCREEN_HEIGHT',['../config_8h.html#a6974d08a74da681b3957b2fead2608b8',1,'config.h']]],
+  ['screen_5fwidth_5',['SCREEN_WIDTH',['../config_8h.html#a2cd109632a6dcccaa80b43561b1ab700',1,'config.h']]],
+  ['setup_6',['setup',['../main_8c.html#a14521bb0dcc3013f1ddfb9bc1514df43',1,'main.c']]],
+  ['shortest_5fdistance_7',['shortest_distance',['../ghost_8c.html#a12b7d1612ee14eebd31c9195352f3dc2',1,'ghost.c']]],
+  ['sp_8',['sp',['../structbutton__t.html#af8cc185634f189f94f16bc6753bb0a20',1,'button_t']]],
+  ['spawn_5fx_9',['spawn_x',['../structghost__t.html#a3bb13c324a76f43c898bedb28a7cb863',1,'ghost_t']]],
+  ['spawn_5fy_10',['spawn_y',['../structghost__t.html#ae6573fba3664839de28ba01a0cc50076',1,'ghost_t']]],
+  ['sprite_2ec_11',['sprite.c',['../sprite_8c.html',1,'']]],
+  ['sprite_2eh_12',['sprite.h',['../sprite_8h.html',1,'']]],
+  ['sprite_5fcreate_13',['sprite_create',['../sprite_8c.html#a51351aea224921531c2e8586812bddf9',1,'sprite_create(xpm_map_t sprite):&#160;sprite.c'],['../sprite_8h.html#a51351aea224921531c2e8586812bddf9',1,'sprite_create(xpm_map_t sprite):&#160;sprite.c']]],
+  ['sprite_5fdestroy_14',['sprite_destroy',['../sprite_8c.html#a1f0f379ec6f2b2cd0985ec0770cb1a2c',1,'sprite_destroy(sprite_t *sprite):&#160;sprite.c'],['../sprite_8h.html#a1f0f379ec6f2b2cd0985ec0770cb1a2c',1,'sprite_destroy(sprite_t *sprite):&#160;sprite.c']]],
+  ['sprite_5ft_15',['sprite_t',['../structsprite__t.html',1,'']]],
+  ['sprites_16',['sprites',['../structview__resources__t.html#a34a9c59011fc1472c35d94812c7cd648',1,'view_resources_t']]],
+  ['state_17',['state',['../structghost__t.html#a7378cbd6f428f2134cd41900682d7b7b',1,'ghost_t']]],
+  ['state_5fgame_5fover_18',['STATE_GAME_OVER',['../game_8h.html#a2d791bc083f82abcaf783010e4bd882fa0f76ed984e8b06e62cddac03843a9544',1,'game.h']]],
+  ['state_5fmenu_19',['STATE_MENU',['../game_8h.html#a2d791bc083f82abcaf783010e4bd882fa8211ee7ceda72b3c0e9b4a547acb471b',1,'game.h']]],
+  ['state_5fpaused_20',['STATE_PAUSED',['../game_8h.html#a2d791bc083f82abcaf783010e4bd882fa6291ce9aab12208cc66968c97a1ce7dd',1,'game.h']]],
+  ['state_5fplaying_21',['STATE_PLAYING',['../game_8h.html#a2d791bc083f82abcaf783010e4bd882faf8f1d4013be7a14c51495005d39e7c0e',1,'game.h']]],
+  ['state_5fquit_22',['STATE_QUIT',['../game_8h.html#a2d791bc083f82abcaf783010e4bd882faaa31548ade48c0ad04f505fde3c06352',1,'game.h']]],
+  ['state_5fticks_5fremaining_23',['state_ticks_remaining',['../structghost__t.html#a82d3685fc07f754e75735e570495f1fb',1,'ghost_t']]]
+];

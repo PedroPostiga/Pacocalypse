@@ -2,15 +2,17 @@
 #define _HUD_H_
 
 #include "../model/player/player.h"
-#include "model/map/map.h"
 #include "font.h"
 
 /**
- * @brief Draws the HUD (Heads Up Display) showing score and lives
+ * @brief Draws the in-game HUD.
  * 
- * @param player pointer to the player structure containing score and lives
- * @param font pointer to the font used for drawing
+ * Shows score, lives, alive time, and stored power-up count.
+ *
+ * @param player Player data to display.
+ * @param font Font used for drawing text.
+ * @param alive_seconds Number of seconds survived in the current run.
  */
-void hud_draw(const player_t *player, font_t *font);
+void hud_draw(const player_t *player, font_t *font, uint32_t alive_seconds);
 
 #endif // _HUD_H_

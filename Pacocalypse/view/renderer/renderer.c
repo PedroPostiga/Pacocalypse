@@ -2,15 +2,33 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "renderer.h"
+#include "../../config.h"
 #include "../../../lab5/videocard.h"
 #include "../../model/game/game.h"
 #include "../../model/map/map.h"
 #include "../hud.h"
 #include "../sprite.h"
+#include "../resources/resources.h"
+#include "../ui/menu.h"
+#include "../ui/pause.h"
 
 static vbe_mode_info_t vmi;
+
+#define CURSOR_HOTSPOT_X 8
+#define CURSOR_HOTSPOT_Y 6
+
+static uint8_t direction_to_ghost_frame(direction_t dir) {
+    switch (dir) {
+        case DIR_UP:    return 0;
+        case DIR_RIGHT: return 1;
+        case DIR_DOWN:  return 2;
+        case DIR_LEFT:  return 3;
+        default:        return 1;
+    }
+}
 
 static void renderer_draw_tile_sprite(const sprite_t* sprite, int x, int y) {
     if (!sprite) return;
@@ -67,6 +85,11 @@ static void renderer_draw_player(const player_t* player, const game_sprites_t *s
 
 static animated_sprite_t* renderer_select_ghost_sprite(const ghost_t* ghost, const game_sprites_t *sprites) {
     if (!ghost || !sprites) return NULL;
+    
+    // Show eyes when dead or respawning
+    if (ghost->state == GHOST_DEAD || ghost->state == GHOST_RESPAWNING)
+        return sprites->ghost_eyes;
+    
     if (ghost->state == GHOST_FRIGHTENED)
         return sprites->frightened_ghost_anim;
 
@@ -79,13 +102,38 @@ static animated_sprite_t* renderer_select_ghost_sprite(const ghost_t* ghost, con
     }
 }
 
+// Maps ghost direction to eyes sprite frame index
+// Eyes frames are ordered: [UP=0, RIGHT=1, DOWN=2, LEFT=3]
+static int renderer_get_eyes_frame(direction_t direction) {
+    switch (direction) {
+        case DIR_UP:    return 0;  // eyes_up
+        case DIR_DOWN:  return 2;  // eyes_down
+        case DIR_LEFT:  return 3;  // eyes_left
+        case DIR_RIGHT: return 1;  // eyes_right
+        default:        return 0;  // Default to up
+    }
+}
+
 static void renderer_draw_ghost(ghost_t* const ghosts[GHOST_COUNT], const game_sprites_t *sprites) {
     for (int i = 0; i < GHOST_COUNT; i++) {
         ghost_t *ghost = ghosts[i];
-        if (!ghost || ghost->state == GHOST_DEAD) continue;
+        if (!ghost) continue;
+        
+        // Skip drawing if ghost is permanently dead (not respawning)
+        if (ghost->state == GHOST_DEAD) {
+            // Still need to draw eyes
+        }
 
         animated_sprite_t *ghost_anim = renderer_select_ghost_sprite(ghost, sprites);
         if (!ghost_anim) continue;
+
+        // For eyes sprites, set the frame based on direction
+        if (ghost->state == GHOST_DEAD || ghost->state == GHOST_RESPAWNING) {
+            int eyes_frame = renderer_get_eyes_frame(ghost->direction);
+            if (eyes_frame >= 0 && eyes_frame < (int)ghost_anim->no_pixmaps) {
+                ghost_anim->current_pixmap = eyes_frame;
+            }
+        }
 
         sprite_t *frame = animated_sprite_get_current_frame(ghost_anim);
         draw_sprite(frame, ghost->x, ghost->y);
@@ -94,7 +142,31 @@ static void renderer_draw_ghost(ghost_t* const ghosts[GHOST_COUNT], const game_s
 
 static void renderer_draw_mouse(int mouse_x, int mouse_y, sprite_t* cursor_sprite) {
     // Draw cursor using pre-rendered XPM for better performance
-    draw_sprite(cursor_sprite, mouse_x, mouse_y);
+    if (!cursor_sprite) return;
+
+    int draw_x = mouse_x - CURSOR_HOTSPOT_X;
+    int draw_y = mouse_y - CURSOR_HOTSPOT_Y;
+
+    if (draw_x < 0) draw_x = 0;
+    if (draw_y < 0) draw_y = 0;
+    if (draw_x > SCREEN_WIDTH - cursor_sprite->width) draw_x = SCREEN_WIDTH - cursor_sprite->width;
+    if (draw_y > SCREEN_HEIGHT - cursor_sprite->height) draw_y = SCREEN_HEIGHT - cursor_sprite->height;
+
+    draw_sprite(cursor_sprite, draw_x, draw_y);
+}
+
+static void renderer_draw_menu_summary(const game_state_t *state, font_t *font) {
+    if (!state || !state->player || !font || !state->run_summary_available) return;
+
+    char text_buffer[64];
+    int y = SCREEN_HEIGHT - font->tile_size - 20;
+
+    sprintf(text_buffer, "TIME: %02u:%02u", state->run_alive_seconds / 60, state->run_alive_seconds % 60);
+    draw_string(font, text_buffer, 20, y);
+
+    sprintf(text_buffer, "SCORE: %u", state->player->score);
+    int text_width = (int)strlen(text_buffer) * font->tile_size;
+    draw_string(font, text_buffer, SCREEN_WIDTH - text_width - 20, y);
 }
 
 
@@ -113,46 +185,74 @@ void renderer_draw_button(const button_t *btn, int mouse_x, int mouse_y) {
     button_draw(btn, is_hovered);
 }
 
-void renderer_draw_game(const game_state_t* state) {
-    if (!state || !state->sprites) return;
+void renderer_update_animations(const game_state_t *state, const view_resources_t *resources) {
+    if (!state || !resources || !resources->sprites) return;
+
+    game_sprites_t *sp = resources->sprites;
+
+    if (sp->player_anim_up)    animated_sprite_update(sp->player_anim_up);
+    if (sp->player_anim_down)  animated_sprite_update(sp->player_anim_down);
+    if (sp->player_anim_left)  animated_sprite_update(sp->player_anim_left);
+    if (sp->player_anim_right) animated_sprite_update(sp->player_anim_right);
+
+    animated_sprite_t *ghost_sprites[GHOST_COUNT] = {
+        sp->ghost_red,
+        sp->ghost_pink,
+        sp->ghost_cyan,
+        sp->ghost_orange
+    };
+
+    for (int i = 0; i < state->num_ghosts; i++) {
+        ghost_t *ghost = state->ghosts[i];
+        if (!ghost) continue;
+
+        animated_sprite_t *anim = ghost_sprites[ghost->id];
+        if (anim) {
+            anim->current_pixmap = direction_to_ghost_frame(ghost->direction);
+        }
+    }
+
+    if (sp->frightened_ghost_anim) animated_sprite_update(sp->frightened_ghost_anim);
+    if (sp->ghost_eyes)            animated_sprite_update(sp->ghost_eyes);
+}
+
+void renderer_draw_game(const game_state_t* state,
+                        const view_resources_t *resources,
+                        int mouse_x,
+                        int mouse_y,
+                        const menu_state_t *menu,
+                        const pause_state_t *pause) {
+    if (!state || !resources || !resources->sprites || !menu || !pause) return;
 
     vg_draw_rectangle(0, 0, vmi.XResolution, vmi.YResolution, 0x111111);
 
     switch (state->mode) {
         case STATE_MENU:
-            if (state->sprites->menu_bg) {
-                int bg_x = (vmi.XResolution - state->sprites->menu_bg->width) / 2;
-                int bg_y = (vmi.YResolution - state->sprites->menu_bg->height) / 2;
-                if (bg_x < 0) bg_x = 0;
-                if (bg_y < 0) bg_y = 0;
-                draw_sprite(state->sprites->menu_bg, bg_x, bg_y);
-            }
-            renderer_draw_button(&state->play_button, state->mouse_x, state->mouse_y);
-            renderer_draw_button(&state->quit_button, state->mouse_x, state->mouse_y);
+            menu_draw(menu, mouse_x, mouse_y, resources->sprites);
+            renderer_draw_menu_summary(state, resources->game_font);
             break;
         case STATE_PLAYING:
-            renderer_draw_map(state->map, state->sprites);
-            renderer_draw_ghost(state->ghosts, state->sprites);
-            renderer_draw_player(state->player, state->sprites);
-            hud_draw(state->player, state->game_font);
+            renderer_draw_map(state->map, resources->sprites);
+            renderer_draw_ghost(state->ghosts, resources->sprites);
+            renderer_draw_player(state->player, resources->sprites);
+            hud_draw(state->player, resources->game_font, state->run_alive_seconds);
             break;
         case STATE_PAUSED:
-            renderer_draw_map(state->map, state->sprites);
-            renderer_draw_ghost(state->ghosts, state->sprites);
-            renderer_draw_player(state->player, state->sprites);
-            hud_draw(state->player, state->game_font);
-            vg_draw_rectangle(vmi.XResolution / 2 - 100,
-                              vmi.YResolution / 2 - 30,
-                              200, 60, 0x333333);
+            renderer_draw_map(state->map, resources->sprites);
+            renderer_draw_ghost(state->ghosts, resources->sprites);
+            renderer_draw_player(state->player, resources->sprites);
+            hud_draw(state->player, resources->game_font, state->run_alive_seconds);
+            pause_draw(pause, mouse_x, mouse_y, resources->sprites);
             break;
         case STATE_GAME_OVER:
+            menu_draw(menu, mouse_x, mouse_y, resources->sprites);
+            renderer_draw_menu_summary(state, resources->game_font);
             break;
         case STATE_QUIT:
             break;
     }
     
-    // Draw mouse cursor on top of everything
-    renderer_draw_mouse(state->mouse_x, state->mouse_y, state->sprites->cursor);
+    renderer_draw_mouse(mouse_x, mouse_y, resources->sprites->cursor);
 
     vg_flip();
 }
